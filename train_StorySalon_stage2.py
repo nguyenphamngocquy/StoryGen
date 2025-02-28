@@ -104,6 +104,7 @@ class SampleLogger:
 def train(
     pretrained_model_path: str,
     logdir: str,
+    dataset_path: str = "./StorySalon/",
     train_steps: int = 300,
     validation_steps: int = 1000,
     validation_sample_logger: Optional[Dict] = None,
@@ -204,8 +205,8 @@ def train(
         eps=adam_epsilon,
     )
 
-    train_dataset = StorySalonDataset(root="./StorySalon/", dataset_name='train')
-    val_dataset = StorySalonDataset(root="./StorySalon/", dataset_name='test')
+    train_dataset = StorySalonDataset(root=dataset_path, dataset_name='train')
+    val_dataset = StorySalonDataset(root=dataset_path, dataset_name='test')
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())

@@ -103,6 +103,7 @@ class SampleLogger:
 def train(
     pretrained_model_path: str,
     logdir: str,
+    dataset_path: str = "./COCO2017/",
     train_steps: int = 300,
     validation_steps: int = 1000,
     validation_sample_logger: Optional[Dict] = None,
@@ -202,8 +203,8 @@ def train(
         eps=adam_epsilon,
     )
 
-    train_dataset = COCOMultiSegDataset(root="./COCO2017/")
-    val_dataset = COCOValMultiSegDataset(root="./COCO2017/")
+    train_dataset = COCOMultiSegDataset(root=dataset_path)
+    val_dataset = COCOValMultiSegDataset(root=dataset_path)
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())
