@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from diffusers.models.attention import AttentionBlock
+from diffusers.models.attention_processor import AttentionBlock
 from diffusers.models.resnet import Downsample2D, ResnetBlock2D, Upsample2D
 from model.attention import Transformer2DModel
 
