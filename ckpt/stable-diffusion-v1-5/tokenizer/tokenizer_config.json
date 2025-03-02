@@ -1,4 +1,5 @@
 {
+  "model_type": "CLIPTokenizer",
   "add_prefix_space": false,
   "bos_token": {
     "__type": "AddedToken",
