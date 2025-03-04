@@ -151,6 +151,13 @@ def train(
     scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
+    pipeline = StableDiffusionPipeline(
+        vae=vae,
+        text_encoder=text_encoder,
+        tokenizer=tokenizer,
+        unet=unet,
+        scheduler=scheduler,
+    )
     pipeline.set_progress_bar_config(disable=True)
 
     if is_xformers_available():
