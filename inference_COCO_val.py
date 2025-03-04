@@ -10,7 +10,7 @@ from accelerate.logging import get_logger
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.utils.import_utils import is_xformers_available
 from tqdm.auto import tqdm
-from transformers import CLIPTokenizer, CLIPTextModel
+from transformers import AutoTokenizer, CLIPTextModel
 
 from model.unet_2d_condition import UNet2DConditionModel
 from model.pipeline import StableDiffusionPipeline
@@ -60,24 +60,27 @@ def test():
         
     accelerator = Accelerator(mixed_precision=mixed_precision)
 
-    tokenizer = CLIPTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
-    text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
+    # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
+    # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
-    scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+    # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
 
     val_dataset = COCOValMultiSegDataset(root="./COCO2017/")
     val_data = DataLoader(val_dataset, batch_size=1, num_workers=1, shuffle=False)
     
     print(val_dataset.__len__())
 
-    pipeline = StableDiffusionPipeline(
-        vae=vae,
-        text_encoder=text_encoder,
-        tokenizer=tokenizer,
-        unet=unet,
-        scheduler=scheduler,
-    )
+    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path)
+    text_encoder = pipeline.text_encoder
+    pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
+    # pipeline = StableDiffusionPipeline(
+    #     vae=vae,
+    #     text_encoder=text_encoder,
+    #     tokenizer=tokenizer,
+    #     unet=unet,
+    #     scheduler=scheduler,
+    # )
     
     if is_xformers_available():
         try:

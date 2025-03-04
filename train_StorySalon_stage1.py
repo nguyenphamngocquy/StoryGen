@@ -18,7 +18,7 @@ from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler
 from diffusers.optimization import get_scheduler
 from diffusers.utils.import_utils import is_xformers_available
 from tqdm.auto import tqdm
-from transformers import CLIPTokenizer, CLIPTextModel
+from transformers import AutoTokenizer, CLIPTextModel
 
 from utils.util import get_time_string, get_function_args
 from model.unet_2d_condition import UNet2DConditionModel
@@ -141,8 +141,8 @@ def train(
     if seed is not None:
         set_seed(seed)
 
-    tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
-    text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
+    # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
+    # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_config(pretrained_model_path, subfolder="unet")
     pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin', map_location='cpu')
@@ -151,13 +151,16 @@ def train(
     scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
-    pipeline = StableDiffusionPipeline(
-        vae=vae,
-        text_encoder=text_encoder,
-        tokenizer=tokenizer,
-        unet=unet,
-        scheduler=scheduler,
-    )
+    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path)
+    tokenizer = pipeline.tokenizer
+    text_encoder = pipeline.text_encoder
+    # pipeline = StableDiffusionPipeline(
+    #     vae=vae,
+    #     text_encoder=text_encoder,
+    #     tokenizer=tokenizer,
+    #     unet=unet,
+    #     scheduler=scheduler,
+    # )
     pipeline.set_progress_bar_config(disable=True)
 
     if is_xformers_available():

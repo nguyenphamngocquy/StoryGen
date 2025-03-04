@@ -7,7 +7,7 @@ import random
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-from transformers import CLIPTokenizer
+from transformers import AutoTokenizer
 from torchvision import transforms
 
 # This Simple Dataset is just for testing the pipeline works well.
