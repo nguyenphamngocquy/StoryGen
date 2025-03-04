@@ -142,14 +142,19 @@ def train(
 
     # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
     # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
-    vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
-    unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
-    scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
-    noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+    # vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
+    # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
+    # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+    # noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
     pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path)
     tokenizer = pipeline.tokenizer
     text_encoder = pipeline.text_encoder
+    vae = pipeline.vae
+    unet = pipeline.unet
+    pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
+    scheduler = pipeline.scheduler
+    noise_scheduler = DDPMScheduler.from_config(pipeline.scheduler.config)
     # pipeline = StableDiffusionPipeline(
     #     vae=vae,
     #     text_encoder=text_encoder,
