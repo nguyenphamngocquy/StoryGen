@@ -10,7 +10,7 @@ from accelerate.logging import get_logger
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.utils.import_utils import is_xformers_available
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer, CLIPTextModel
+from transformers import CLIPTokenizer, CLIPTextModel
 
 from model.unet_2d_condition import UNet2DConditionModel
 from model.pipeline import StableDiffusionPipeline
@@ -60,7 +60,7 @@ def test():
         
     accelerator = Accelerator(mixed_precision=mixed_precision)
 
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
+    tokenizer = CLIPTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
     text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")

@@ -13,7 +13,7 @@ from accelerate import Accelerator
 from accelerate.logging import get_logger
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.utils.import_utils import is_xformers_available
-from transformers import AutoTokenizer, CLIPTextModel
+from transformers import CLIPTokenizer, CLIPTextModel
 
 from utils.util import get_time_string
 from model.unet_2d_condition import UNet2DConditionModel
@@ -41,7 +41,7 @@ def test(
         os.makedirs(logdir)
     accelerator = Accelerator(mixed_precision=mixed_precision)
 
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
+    tokenizer = CLIPTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
     text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")

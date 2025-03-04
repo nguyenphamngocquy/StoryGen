@@ -17,7 +17,7 @@ from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler
 from diffusers.optimization import get_scheduler
 from diffusers.utils.import_utils import is_xformers_available
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer, CLIPTextModel
+from transformers import CLIPTokenizer, CLIPTextModel
 
 from utils.util import get_time_string, get_function_args
 from model.unet_2d_condition import UNet2DConditionModel
