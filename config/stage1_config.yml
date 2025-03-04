@@ -1,4 +1,4 @@
-pretrained_model_path: "./ckpt/stable-diffusion-v1-5/"
+pretrained_model_path: "./ckpt/stable-diffusion-v1-4/"
 logdir: "./stage1_log/"
 validation_sample_logger:
     num_inference_steps: 40

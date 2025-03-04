@@ -145,7 +145,7 @@ def train(
     text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_config(pretrained_model_path, subfolder="unet")
-    pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin', map_location='cpu')
+    pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-4/unet/diffusion_pytorch_model.bin', map_location='cpu')
     unet.load_SDM_state_dict(pretrained_sdm)
     # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
