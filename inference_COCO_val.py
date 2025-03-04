@@ -71,7 +71,7 @@ def test():
     
     print(val_dataset.__len__())
 
-    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path)
+    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
     text_encoder = pipeline.text_encoder
     pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
     # pipeline = StableDiffusionPipeline(

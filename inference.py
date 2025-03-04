@@ -47,7 +47,7 @@ def test(
     unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
-    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path)
+    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
     text_encoder = pipeline.text_encoder
     pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
     # pipeline = StableDiffusionPipeline(

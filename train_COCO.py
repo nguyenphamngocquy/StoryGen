@@ -147,7 +147,7 @@ def train(
     # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     # noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
-    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path)
+    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
     tokenizer = pipeline.tokenizer
     text_encoder = pipeline.text_encoder
     vae = pipeline.vae
