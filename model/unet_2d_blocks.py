@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from diffusers.models.attention import Attention
+from diffusers.models.attention import AttentionBlock
 from diffusers.models.resnet import Downsample2D, ResnetBlock2D, Upsample2D
 from model.attention import Transformer2DModel
 
@@ -155,7 +155,7 @@ class UNetMidBlock2D(nn.Module):
         for _ in range(num_layers):
             if self.add_attention:
                 attentions.append(
-                    Attention(
+                    AttentionBlock(
                         in_channels,
                         num_head_channels=attn_num_head_channels,
                         rescale_output_factor=output_scale_factor,
