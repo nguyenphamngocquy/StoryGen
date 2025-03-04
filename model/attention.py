@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from diffusers.models.attention import Attention as CrossAttention
+from diffusers.models.cross_attention import CrossAttention
 from diffusers.utils import BaseOutput
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.modeling_utils import ModelMixin

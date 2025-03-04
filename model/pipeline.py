@@ -4,7 +4,7 @@ from typing import Callable, List, Optional, Union
 from collections import defaultdict
 
 import torch
-from diffusers import DiffusionPipeline
+from diffusers.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from diffusers.schedulers import (DDIMScheduler, DPMSolverMultistepScheduler,
                                   EulerAncestralDiscreteScheduler,
