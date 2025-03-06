@@ -450,8 +450,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
                 latent_model_input = torch.cat([latents] * 3) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 # predict the noise residual
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False)[0].to(dtype=latents.dtype)
-                # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=None).sample.to(dtype=latents.dtype)
+                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,attention_mask=img_dif_conditions, return_dict=False)[0].to(dtype=latents.dtype)
+                # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,attention_mask=None).sample.to(dtype=latents.dtype)
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_image, noise_pred_all = noise_pred.chunk(3)

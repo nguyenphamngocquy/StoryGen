@@ -218,7 +218,7 @@ def train(
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=8)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=4)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=1)
 
     lr_scheduler = get_scheduler(
@@ -294,7 +294,7 @@ def train(
         encoder_hidden_states = text_encoder(prompt_ids.to(accelerator.device))[0] # B * 77 * 768
         
         # Predict the noise residual
-        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
+        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, attention_mask=None, return_dict=False)[0]
         
         # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
         loss = F.mse_loss(model_pred.float() * (1. - mask), noise.float() * (1 - mask), reduction="mean")
