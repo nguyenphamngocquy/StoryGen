@@ -155,7 +155,7 @@ def train(
     tokenizer = pipeline.tokenizer
     text_encoder = pipeline.text_encoder
     vae = pipeline.vae
-    pipeline.unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
+    pipeline.unet = UNet2DConditionModel.from_pretrained(pretrained_model_path + "/unet")
     pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
     scheduler = pipeline.scheduler
     noise_scheduler = DDPMScheduler.from_config(pipeline.scheduler.config)
