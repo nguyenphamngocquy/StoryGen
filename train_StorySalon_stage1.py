@@ -104,7 +104,7 @@ class SampleLogger:
 def train(
     pretrained_model_path: str,
     logdir: str,
-    dataset_path: str = "./StorySalon/",
+    dataset_path: str,
     train_steps: int = 300,
     validation_steps: int = 1000,
     validation_sample_logger: Optional[Dict] = None,
