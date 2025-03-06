@@ -144,9 +144,9 @@ def train(
     # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
     # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     # vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
-    unet = UNet2DConditionModel.from_config(pretrained_model_path, subfolder="unet")
-    pretrained_sdm = torch.load('/kaggle/working/StoryGen/ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin', map_location='cpu')
-    unet.load_SDM_state_dict(pretrained_sdm)
+    # unet = UNet2DConditionModel.from_config(pretrained_model_path, subfolder="unet")
+    # pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin', map_location='cpu')
+    # unet.load_SDM_state_dict(pretrained_sdm)
     # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     # noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
@@ -155,7 +155,7 @@ def train(
     tokenizer = pipeline.tokenizer
     text_encoder = pipeline.text_encoder
     vae = pipeline.vae
-    pipeline.unet = unet
+    pipeline.unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
     scheduler = pipeline.scheduler
     noise_scheduler = DDPMScheduler.from_config(pipeline.scheduler.config)
