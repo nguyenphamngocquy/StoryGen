@@ -1,5 +1,6 @@
 pretrained_model_path: "./stage1_log/"
 logdir: "./stage2_log/"
+dataset_path: "/kaggle/input/storysalon/StorySalon"
 validation_sample_logger:
     num_inference_steps: 40
     guidance_scale: 7

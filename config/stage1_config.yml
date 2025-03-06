@@ -1,5 +1,6 @@
 pretrained_model_path: "stable-diffusion-v1-5/stable-diffusion-v1-5"
 logdir: "./stage1_log/"
+dataset_path: "/kaggle/input/storysalon/StorySalon"
 validation_sample_logger:
     num_inference_steps: 40
     guidance_scale: 7
