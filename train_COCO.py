@@ -143,7 +143,7 @@ def train(
     # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
     # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     # vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
-    # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
+    unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     # noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
@@ -151,7 +151,7 @@ def train(
     tokenizer = pipeline.tokenizer
     text_encoder = pipeline.text_encoder
     vae = pipeline.vae
-    unet = pipeline.unet
+    pipeline.unet = unet
     pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
     scheduler = pipeline.scheduler
     noise_scheduler = DDPMScheduler.from_config(pipeline.scheduler.config)
