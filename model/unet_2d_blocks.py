@@ -267,13 +267,13 @@ class UNetMidBlock2DCrossAttn(nn.Module):
         self.resnets = nn.ModuleList(resnets)
 
     def forward(
-        self, hidden_states, temb=None, attention_mask=None, encoder_hidden_states=None, cross_attention_kwargs=None
+        self, hidden_states, temb=None, image_hidden_states=None, encoder_hidden_states=None, cross_attention_kwargs=None
     ):
         hidden_states = self.resnets[0](hidden_states, temb)
         mid_img_dif_conditions = []
 
-        if attention_mask is None:
-            # No attention_mask, ref_image cycle, need img_dif_condition
+        if image_hidden_states is None:
+            # No image_hidden_states, ref_image cycle, need img_dif_condition
             for attn, resnet in zip(self.attentions, self.resnets[1:]):
                 result = attn(
                     hidden_states,
@@ -284,11 +284,11 @@ class UNetMidBlock2DCrossAttn(nn.Module):
                 mid_img_dif_conditions.append(result.img_dif_condition)
                 hidden_states = resnet(hidden_states, temb)
         else:
-            # Have attention_mask, image cycle, no need for img_dif_condition
+            # Have image_hidden_states, image cycle, no need for img_dif_condition
             for attn, resnet in zip(self.attentions, self.resnets[1:]):
                 hidden_states = attn(
                     hidden_states,
-                    attention_mask=attention_mask["mid"],
+                    image_hidden_states=image_hidden_states["mid"],
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                 ).sample
@@ -372,7 +372,7 @@ class CrossAttnDownBlock2D(nn.Module):
         self.gradient_checkpointing = False
 
     def forward(
-        self, hidden_states, temb=None, attention_mask=None, encoder_hidden_states=None, cross_attention_kwargs=None
+        self, hidden_states, temb=None, image_hidden_states=None, encoder_hidden_states=None, cross_attention_kwargs=None
     ):
         output_states = ()
         down_img_dif_conditions = []
@@ -380,8 +380,8 @@ class CrossAttnDownBlock2D(nn.Module):
         ln = 4 - hidden_states.shape[2] // 16
         if ln <1: ln=1 # the number of the block: 1 or 2 or 3
 
-        if attention_mask is None:
-            # No attention_mask, ref_image cycle, need img_dif_condition
+        if image_hidden_states is None:
+            # No image_hidden_states, ref_image cycle, need img_dif_condition
             for resnet, attn in zip(self.resnets, self.attentions):
 
                 hidden_states = resnet(hidden_states, temb)
@@ -395,7 +395,7 @@ class CrossAttnDownBlock2D(nn.Module):
 
                 output_states += (hidden_states,)
         else:
-            # Have attention_mask, image cycle, no need for img_dif_condition
+            # Have image_hidden_states, image cycle, no need for img_dif_condition
             for i, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
                 if self.training and self.gradient_checkpointing:
 
@@ -412,7 +412,7 @@ class CrossAttnDownBlock2D(nn.Module):
                     hidden_states = torch.utils.checkpoint.checkpoint(
                         create_custom_forward(attn, return_dict=False),
                         hidden_states,
-                        attention_mask["down_"+str(ln)+'_'+str(i+1)],
+                        image_hidden_states["down_"+str(ln)+'_'+str(i+1)],
                         encoder_hidden_states,
                         cross_attention_kwargs,
                     )[0]
@@ -420,7 +420,7 @@ class CrossAttnDownBlock2D(nn.Module):
                     hidden_states = resnet(hidden_states, temb)
                     hidden_states = attn(
                         hidden_states,
-                        attention_mask=attention_mask["down_"+str(ln)+'_'+str(i+1)],
+                        image_hidden_states=image_hidden_states["down_"+str(ln)+'_'+str(i+1)],
                         encoder_hidden_states=encoder_hidden_states,
                         cross_attention_kwargs=cross_attention_kwargs,
                     ).sample
@@ -590,7 +590,7 @@ class CrossAttnUpBlock2D(nn.Module):
         hidden_states,
         res_hidden_states_tuple,
         temb=None,
-        attention_mask=None,
+        image_hidden_states=None,
         encoder_hidden_states=None,
         cross_attention_kwargs=None,
         upsample_size=None,
@@ -600,8 +600,8 @@ class CrossAttnUpBlock2D(nn.Module):
         ln = hidden_states.shape[2] // 16
         if ln > 3: ln=3 # the number of the block: 1 or 2 or 3
 
-        if attention_mask is None:
-            # No attention_mask, ref_image cycle, need img_dif_condition
+        if image_hidden_states is None:
+            # No image_hidden_states, ref_image cycle, need img_dif_condition
             for resnet, attn in zip(self.resnets, self.attentions):
                 # pop res hidden states
                 res_hidden_states = res_hidden_states_tuple[-1]
@@ -618,7 +618,7 @@ class CrossAttnUpBlock2D(nn.Module):
                 up_img_dif_conditions.append(result.img_dif_condition)
 
         else:
-            # Have attention_mask, image cycle, no need for img_dif_condition
+            # Have image_hidden_states, image cycle, no need for img_dif_condition
             for i, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
                 # pop res hidden states
                 res_hidden_states = res_hidden_states_tuple[-1]
@@ -640,7 +640,7 @@ class CrossAttnUpBlock2D(nn.Module):
                     hidden_states = torch.utils.checkpoint.checkpoint(
                         create_custom_forward(attn, return_dict=False),
                         hidden_states,
-                        attention_mask["up_"+str(ln)+'_'+str(i+1)],
+                        image_hidden_states["up_"+str(ln)+'_'+str(i+1)],
                         encoder_hidden_states,
                         cross_attention_kwargs,
                     )[0]
@@ -648,7 +648,7 @@ class CrossAttnUpBlock2D(nn.Module):
                     hidden_states = resnet(hidden_states, temb)
                     hidden_states = attn(
                         hidden_states,
-                        attention_mask=attention_mask["up_"+str(ln)+'_'+str(i+1)],
+                        image_hidden_states=image_hidden_states["up_"+str(ln)+'_'+str(i+1)],
                         encoder_hidden_states=encoder_hidden_states,
                         cross_attention_kwargs=cross_attention_kwargs,
                     ).sample

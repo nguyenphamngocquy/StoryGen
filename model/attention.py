@@ -85,7 +85,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
     def forward(
         self,
         hidden_states,
-        attention_mask=None,
+        image_hidden_states=None,
         encoder_hidden_states=None,
         timestep=None,
         cross_attention_kwargs=None,
@@ -106,7 +106,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         for block in self.transformer_blocks:
             hidden_states, img_dif_condition = block(
                 hidden_states,
-                attention_mask=attention_mask,
+                image_hidden_states=image_hidden_states,
                 encoder_hidden_states=encoder_hidden_states,
                 timestep=timestep,
                 cross_attention_kwargs=cross_attention_kwargs,
@@ -236,7 +236,7 @@ class BasicTransformerBlock(nn.Module):
     def forward(
         self,
         hidden_states,
-        attention_mask=None, # image diffusion feature for image cross attention
+        image_hidden_states=None, # image diffusion feature for image cross attention
         encoder_hidden_states=None, # text CLIP feature for text cross attention
         timestep=None,
         attention_mask=None,
@@ -278,13 +278,13 @@ class BasicTransformerBlock(nn.Module):
             # img_dif_condition = hidden_states.clone() # The diffusion feature to return
         
         # 3. Image-Cross-Attn
-        if attention_mask is not None:
+        if image_hidden_states is not None:
             norm_hidden_states_i = (
                 self.norm4(hidden_states, timestep) if self.use_ada_layer_norm else self.norm4(hidden_states)
             )
             attn_output_i = self.attn3(
                 norm_hidden_states_i,
-                encoder_hidden_states=attention_mask,
+                encoder_hidden_states=image_hidden_states,
                 attention_mask=attention_mask,
                 **cross_attention_kwargs,
             )
@@ -434,7 +434,7 @@ if __name__ == '__main__':
         result = attn(
                 hidden_states,
                 encoder_hidden_states = encoder_hidden_states,
-                attention_mask = img_dif_condition,
+                image_hidden_states = img_dif_condition,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
     hidden_states = result.sample

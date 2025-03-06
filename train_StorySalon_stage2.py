@@ -328,7 +328,7 @@ def train(
         
         
         # Predict the noise residual
-        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, attention_mask=img_dif_conditions, return_dict=False)[0]
+        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=img_dif_conditions, return_dict=False)[0]
         
         # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
         loss = F.mse_loss(model_pred.float() * (1. - mask), noise.float() * (1 - mask), reduction="mean")

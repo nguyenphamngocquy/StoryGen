@@ -340,7 +340,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         sample: torch.FloatTensor,
         timestep: Union[torch.Tensor, float, int],
         encoder_hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
+        image_hidden_states: Optional[torch.Tensor] = None,
         class_labels: Optional[torch.Tensor] = None,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         return_dict: bool = True,
@@ -420,7 +420,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 sample, res_samples, down_img_dif_conditions = downsample_block(
                     hidden_states=sample,
                     temb=emb,
-                    attention_mask=attention_mask,
+                    image_hidden_states=image_hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
@@ -437,7 +437,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             sample, mid_img_dif_conditions = self.mid_block(
                 sample,
                 emb,
-                attention_mask=attention_mask,
+                image_hidden_states=image_hidden_states,
                 encoder_hidden_states=encoder_hidden_states,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
@@ -459,7 +459,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                     hidden_states=sample,
                     temb=emb,
                     res_hidden_states_tuple=res_samples,
-                    attention_mask=attention_mask,
+                    image_hidden_states=image_hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                     upsample_size=upsample_size,
@@ -508,4 +508,3 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
 
         state_dict.update(state_dict_SDM)
         self.load_state_dict(state_dict, **kwargs)
-    
