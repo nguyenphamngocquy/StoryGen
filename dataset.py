@@ -137,8 +137,8 @@ class StorySalonDataset(Dataset):
                     for i in range(len(texts) - 3):
                         self.test_text_list.append([os.path.join(video, texts[i]), os.path.join(video, texts[i+1]), os.path.join(video, texts[i+2]), os.path.join(video, texts[i+3])])
         
-        self.video_image_dir = os.path.join(self.root, 'image_inpainted_finally_checked')
-        self.video_mask_dir = os.path.join(self.root, 'mask')
+        self.video_image_dir = os.path.join(self.root, 'Image_inpainted')
+        self.video_mask_dir = os.path.join(self.root, 'Mask')
         self.video_text_dir = os.path.join(self.root, 'Text', 'Caption', 'Video')
         video_folders = sorted(os.listdir(self.video_image_dir)) # 00001
         self.train_image_folders = [os.path.join(self.video_image_dir, folder) for folder in video_folders if folder not in self.video_test_set]
