@@ -141,30 +141,30 @@ def train(
     if seed is not None:
         set_seed(seed)
 
-    # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
-    # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
-    # vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
+    text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
+    vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_config(pretrained_model_path, subfolder="unet")
     pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin', map_location='cpu')
     unet.load_SDM_state_dict(pretrained_sdm)
-    # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
-    # noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+    scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+    noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
-    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
-    tokenizer = pipeline.tokenizer
-    text_encoder = pipeline.text_encoder
-    vae = pipeline.vae
-    pipeline.unet = unet
-    pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
-    scheduler = pipeline.scheduler
-    noise_scheduler = DDPMScheduler.from_config(pipeline.scheduler.config)
-    # pipeline = StableDiffusionPipeline(
-    #     vae=vae,
-    #     text_encoder=text_encoder,
-    #     tokenizer=tokenizer,
-    #     unet=unet,
-    #     scheduler=scheduler,
-    # )
+    # pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
+    # tokenizer = pipeline.tokenizer
+    # text_encoder = pipeline.text_encoder
+    # vae = pipeline.vae
+    # pipeline.unet = unet
+    # pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
+    # scheduler = pipeline.scheduler
+    # noise_scheduler = DDPMScheduler.from_config(pipeline.scheduler.config)
+    pipeline = StableDiffusionPipeline(
+        vae=vae,
+        text_encoder=text_encoder,
+        tokenizer=tokenizer,
+        unet=unet,
+        scheduler=scheduler,
+    )
     pipeline.set_progress_bar_config(disable=True)
 
     if is_xformers_available():
