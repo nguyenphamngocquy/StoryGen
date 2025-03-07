@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import torch.utils.data
 import torch.utils.checkpoint
+import argparse
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -23,10 +24,10 @@ logger = get_logger(__name__)
 
 def test(
     pretrained_model_path: str,
-    logdir: str,
     prompt: str,
     ref_prompt: Union[str, List[str]],
     ref_image: Union[str, List[str]],
+    logdir: str = "./inference_StorySalon/",
     num_inference_steps: int = 40,
     guidance_scale: float = 7.0,
     image_guidance_scale: float = 3.5,
@@ -41,22 +42,22 @@ def test(
         os.makedirs(logdir)
     accelerator = Accelerator(mixed_precision=mixed_precision)
 
-    # tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
-    # text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
+    text_encoder = CLIPTextModel.from_pretrained(pretrained_model_path, subfolder="text_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
-    # scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+    scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
-    pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
-    text_encoder = pipeline.text_encoder
-    pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
-    # pipeline = StableDiffusionPipeline(
-    #     vae=vae,
-    #     text_encoder=text_encoder,
-    #     tokenizer=tokenizer,
-    #     unet=unet,
-    #     scheduler=scheduler,
-    # )
+    # pipeline = StableDiffusionPipeline.from_pretrained(pretrained_model_path, local_files_only=True)
+    # text_encoder = pipeline.text_encoder
+    # pipeline.scheduler = DDIMScheduler.from_config(pipeline.scheduler.config)
+    pipeline = StableDiffusionPipeline(
+        vae=vae,
+        text_encoder=text_encoder,
+        tokenizer=tokenizer,
+        unet=unet,
+        scheduler=scheduler,
+    )
 
     if is_xformers_available():
         try:
@@ -125,30 +126,32 @@ def test(
 
 if __name__ == "__main__":
 
-    pretrained_model_path = '/checkpoint_StorySalon/'
-    logdir = "./inference_StorySalon/"
-    num_inference_steps = 40
-    guidance_scale = 7
-    image_guidance_scale = 3.5
-    num_sample_per_prompt = 10
-    mixed_precision = "fp16"
-    stage = 'auto-regressive' # ["multi-image-condition", "auto-regressive", "no"]
-    
-    prompt = "The white cat is running after the black-haired man."
-    prev_p = ["The black-haired man", "The white cat."]
-    ref_image = ["./data/boy.jpg", 
-                 ".data/whitecat1.jpg"]
+    parser = argparse.ArgumentParser(description="Run inference with parameters")
+    parser.add_argument("--pretrained_model_path", type=str, required=True, help="Path to the pretrained model")
+    parser.add_argument("--logdir", type=str, default=None, help="Path to save inference results")
+    parser.add_argument("--prompt", type=str, required=True, help="Input text prompt")
+    parser.add_argument("--prev_p", nargs="+", required=True, help="Previous prompts (space-separated list)")
+    parser.add_argument("--ref_image", nargs="+", required=True, help="Reference image paths (space-separated list)")
+    parser.add_argument("--num_inference_steps", type=int, default=None, help="Number of inference steps")
+    parser.add_argument("--guidance_scale", type=float, default=None, help="Guidance scale for text")
+    parser.add_argument("--image_guidance_scale", type=float, default=None, help="Guidance scale for images")
+    parser.add_argument("--num_sample_per_prompt", type=int, default=None, help="Number of samples per prompt")
+    parser.add_argument("--stage", type=str, choices=["multi-image-condition", "auto-regressive", "no"], default=None, help="Inference stage")
+    parser.add_argument("--mixed_precision", type=str, choices=["fp16", "fp32"], default=None, help="Mixed precision mode")
+    args = parser.parse_args()
 
-    test(pretrained_model_path, 
-         logdir, 
-         prompt, 
-         prev_p, 
-         ref_image, 
-         num_inference_steps, 
-         guidance_scale, 
-         image_guidance_scale, 
-         num_sample_per_prompt,
-         stage, 
-         mixed_precision)
+    test(
+        pretrained_model_path=args.pretrained_model_path,
+        prompt=args.prompt,
+        ref_prompt=args.prev_p,
+        ref_image=args.ref_image,
+        logdir=args.logdir,
+        num_inference_steps=args.num_inference_steps,
+        guidance_scale=args.guidance_scale,
+        image_guidance_scale=args.image_guidance_scale,
+        num_sample_per_prompt=args.num_sample_per_prompt,
+        stage=args.stage,
+        mixed_precision=args.mixed_precision,
+    )
 
 # CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
