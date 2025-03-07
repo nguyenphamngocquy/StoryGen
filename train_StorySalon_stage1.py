@@ -9,7 +9,7 @@ import torch
 import torch.utils.data
 import torch.nn.functional as F
 import torch.utils.checkpoint
-from torch.cuda.amp import autocast
+from torch import autocast
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -312,7 +312,7 @@ def train(
                 if validation_sample_logger is not None and step % validation_steps == 0:
                     unet.eval()
                     val_batch = next(val_data_yielder)
-                    with autocast():
+                    with autocast("cuda"):
                         validation_sample_logger.log_sample_images(
                             batch = val_batch,
                             pipeline=pipeline,
