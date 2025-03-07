@@ -27,7 +27,7 @@ def test(
     prompt: str,
     ref_prompt: Union[str, List[str]],
     ref_image: Union[str, List[str]],
-    logdir: str = "./inference_StorySalon/",
+    logdir: Optional[str] = "./inference_StorySalon/",
     num_inference_steps: int = 40,
     guidance_scale: float = 7.0,
     image_guidance_scale: float = 3.5,
