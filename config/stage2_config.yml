@@ -1,4 +1,4 @@
-pretrained_model_path: "./stage1_log/"
+pretrained_model_path: "./stage1_log/_250307-040623/checkpoint_3000/"
 logdir: "./stage2_log/"
 dataset_path: "/kaggle/input/storysalon/StorySalon"
 validation_sample_logger:
