@@ -4,6 +4,7 @@ from typing import Optional, Dict
 
 from omegaconf import OmegaConf
 
+import argparse
 import torch
 import torch.utils.data
 import torch.nn.functional as F
@@ -101,8 +102,9 @@ class SampleLogger:
                 img[0].save(os.path.join(self.logdir, f"{step}_{idx}_{sample_seeds[i]}_output.png"))
             
 def train(
-    pretrained_model_path: str,
-    logdir: str,
+    pretrained_model_path: str = "./ckpt/stable-diffusion-v1-5/",
+    logdir: str = "./COCO_log/",
+    dataset_path: str = "./COCO2017/",
     train_steps: int = 300,
     validation_steps: int = 1000,
     validation_sample_logger: Optional[Dict] = None,
@@ -202,8 +204,8 @@ def train(
         eps=adam_epsilon,
     )
 
-    train_dataset = COCOMultiSegDataset(root="./COCO2017/")
-    val_dataset = COCOValMultiSegDataset(root="./COCO2017/")
+    train_dataset = COCOMultiSegDataset(root=dataset_path)
+    val_dataset = COCOValMultiSegDataset(root=dataset_path)
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())
@@ -354,7 +356,48 @@ def train(
 
 
 if __name__ == "__main__":
-    config = "./config/COCO_config.yml"
-    train(**OmegaConf.load(config))
+    # config = "./config/COCO_config.yml"
+    # train(**OmegaConf.load(config))
+    parser = argparse.ArgumentParser(description="Train model with custom parameters.")
+
+    # Add arguments
+    parser.add_argument("--pretrained_model_path", type=str, help="Path to pretrained model.")
+    parser.add_argument("--logdir", type=str, help="Logging directory.")
+    parser.add_argument("--dataset_path", type=str, help="Dataset path.")
+    parser.add_argument("--train_steps", type=int, help="Number of training steps.")
+    parser.add_argument("--validation_steps", type=int, help="Number of validation steps.")
+    parser.add_argument("--gradient_accumulation_steps", type=int, help="Gradient accumulation steps.")
+    parser.add_argument("--seed", type=int, help="Random seed.")
+    parser.add_argument("--mixed_precision", type=str, choices=["no", "fp16", "bf16"], help="Mixed precision mode.")
+    parser.add_argument("--train_batch_size", type=int, help="Training batch size.")
+    parser.add_argument("--val_batch_size", type=int, help="Validation batch size.")
+    parser.add_argument("--learning_rate", type=float, help="Learning rate.")
+    parser.add_argument("--scale_lr", action="store_true", help="Scale learning rate by number of GPUs.")
+    parser.add_argument("--lr_scheduler", type=str, choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"], help="LR scheduler type.")
+    parser.add_argument("--lr_warmup_steps", type=int, help="Number of warmup steps for LR.")
+    parser.add_argument("--use_8bit_adam", action="store_true", help="Use 8-bit Adam optimizer.")
+    parser.add_argument("--adam_beta1", type=float, help="Adam beta1 value.")
+    parser.add_argument("--adam_beta2", type=float, help="Adam beta2 value.")
+    parser.add_argument("--adam_weight_decay", type=float, help="Adam weight decay.")
+    parser.add_argument("--adam_epsilon", type=float, help="Adam epsilon value.")
+    parser.add_argument("--max_grad_norm", type=float, help="Max gradient norm.")
+    parser.add_argument("--checkpointing_steps", type=int, help="Checkpoint save frequency.")
+
+    # Arguments for validation_sample_logger dictionary
+    parser.add_argument("--num_inference_steps", type=int, help="Number of inference steps for validation.")
+    parser.add_argument("--guidance_scale", type=float, help="Guidance scale for validation.")
+
+    args = parser.parse_args()
+    params = {k: v for k, v in vars(args).items() if v is not None}
+
+    # Construct validation_sample_logger dictionary if values are provided
+    if "num_inference_steps" in params and "guidance_scale" in params:
+        validation_sample_logger = {
+            "num_inference_steps": params.pop("num_inference_steps"),
+            "guidance_scale": params.pop("guidance_scale")
+        }
+        params["validation_sample_logger"] = validation_sample_logger
+
+    train(**params)
 
 # CUDA_VISIBLE_DEVICES=0 accelerate launch train_COCO.py
