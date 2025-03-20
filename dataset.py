@@ -137,68 +137,68 @@ class StorySalonDataset(Dataset):
                     for i in range(len(texts) - 3):
                         self.test_text_list.append([os.path.join(video, texts[i]), os.path.join(video, texts[i+1]), os.path.join(video, texts[i+2]), os.path.join(video, texts[i+3])])
         
-        self.video_image_dir = os.path.join("./StorySalon/", 'image_inpainted_finally_checked')
-        self.video_mask_dir = os.path.join("./StorySalon/", 'mask')
-        self.video_text_dir = os.path.join(self.root, 'Text', 'Caption', 'Video')
-        video_folders = sorted(os.listdir(self.video_image_dir)) # 00001
-        self.train_image_folders = [os.path.join(self.video_image_dir, folder) for folder in video_folders if folder not in self.video_test_set]
-        self.train_mask_folders = [os.path.join(self.video_mask_dir, folder) for folder in video_folders if folder not in self.video_test_set]
-        self.train_text_folders = [os.path.join(self.video_text_dir, folder) for folder in video_folders if folder not in self.video_test_set]
-        self.test_image_folders = [os.path.join(self.video_image_dir, folder) for folder in video_folders if folder in self.video_test_set]
-        self.test_mask_folders = [os.path.join(self.video_mask_dir, folder) for folder in video_folders if folder in self.video_test_set]
-        self.test_text_folders = [os.path.join(self.video_text_dir, folder) for folder in video_folders if folder in self.video_test_set]
+        # self.video_image_dir = os.path.join("./StorySalon/", 'image_inpainted_finally_checked')
+        # self.video_mask_dir = os.path.join("./StorySalon/", 'mask')
+        # self.video_text_dir = os.path.join(self.root, 'Text', 'Caption', 'Video')
+        # video_folders = sorted(os.listdir(self.video_image_dir)) # 00001
+        # self.train_image_folders = [os.path.join(self.video_image_dir, folder) for folder in video_folders if folder not in self.video_test_set]
+        # self.train_mask_folders = [os.path.join(self.video_mask_dir, folder) for folder in video_folders if folder not in self.video_test_set]
+        # self.train_text_folders = [os.path.join(self.video_text_dir, folder) for folder in video_folders if folder not in self.video_test_set]
+        # self.test_image_folders = [os.path.join(self.video_image_dir, folder) for folder in video_folders if folder in self.video_test_set]
+        # self.test_mask_folders = [os.path.join(self.video_mask_dir, folder) for folder in video_folders if folder in self.video_test_set]
+        # self.test_text_folders = [os.path.join(self.video_text_dir, folder) for folder in video_folders if folder in self.video_test_set]
         
-        fns = lambda s: sum(((s,int(n))for s, n in re.findall('(\D+)(\d+)','a%s0'%s)),()) 
+        # fns = lambda s: sum(((s,int(n))for s, n in re.findall('(\D+)(\d+)','a%s0'%s)),()) 
         
-        for video in self.train_image_folders: # video: image_folder, /dataset/image/00001
-            images = sorted(os.listdir(video), key=fns)
-            if len(images) <= 3:
-                print(video) # All stories shorter than 4 are in the train set.
-                continue
-            else:    
-                for i in range(len(images) - 3):
-                    self.train_image_list.append([os.path.join(video, images[i]), os.path.join(video, images[i+1]), os.path.join(video, images[i+2]), os.path.join(video, images[i+3])])
+        # for video in self.train_image_folders: # video: image_folder, /dataset/image/00001
+        #     images = sorted(os.listdir(video), key=fns)
+        #     if len(images) <= 3:
+        #         print(video) # All stories shorter than 4 are in the train set.
+        #         continue
+        #     else:    
+        #         for i in range(len(images) - 3):
+        #             self.train_image_list.append([os.path.join(video, images[i]), os.path.join(video, images[i+1]), os.path.join(video, images[i+2]), os.path.join(video, images[i+3])])
 
-        for video in self.train_mask_folders: # video: mask_folder, /dataset/mask/00001
-            masks = sorted(os.listdir(video), key=fns)
-            if len(masks) <= 3:
-                continue
-            else:
-                for i in range(len(masks) - 3):
-                    self.train_mask_list.append([os.path.join(video, masks[i]), os.path.join(video, masks[i+1]), os.path.join(video, masks[i+2]), os.path.join(video, masks[i+3])])
+        # for video in self.train_mask_folders: # video: mask_folder, /dataset/mask/00001
+        #     masks = sorted(os.listdir(video), key=fns)
+        #     if len(masks) <= 3:
+        #         continue
+        #     else:
+        #         for i in range(len(masks) - 3):
+        #             self.train_mask_list.append([os.path.join(video, masks[i]), os.path.join(video, masks[i+1]), os.path.join(video, masks[i+2]), os.path.join(video, masks[i+3])])
 
-        for video in self.train_text_folders: # video: image_folder, /dataset/image/00001
-            texts = sorted(os.listdir(video), key=fns)
-            if len(texts) <= 3:
-                continue
-            else:
-                for i in range(len(texts) - 3):
-                    self.train_text_list.append([os.path.join(video, texts[i]), os.path.join(video, texts[i+1]), os.path.join(video, texts[i+2]), os.path.join(video, texts[i+3])])
+        # for video in self.train_text_folders: # video: image_folder, /dataset/image/00001
+        #     texts = sorted(os.listdir(video), key=fns)
+        #     if len(texts) <= 3:
+        #         continue
+        #     else:
+        #         for i in range(len(texts) - 3):
+        #             self.train_text_list.append([os.path.join(video, texts[i]), os.path.join(video, texts[i+1]), os.path.join(video, texts[i+2]), os.path.join(video, texts[i+3])])
         
-        for video in self.test_image_folders: # video: image_folder, /dataset/image/00001
-            images = sorted(os.listdir(video), key=fns)
-            if len(images) <= 3:
-                print(video)
-                continue
-            else:    
-                for i in range(len(images) - 3):
-                    self.test_image_list.append([os.path.join(video, images[i]), os.path.join(video, images[i+1]), os.path.join(video, images[i+2]), os.path.join(video, images[i+3])])
+        # for video in self.test_image_folders: # video: image_folder, /dataset/image/00001
+        #     images = sorted(os.listdir(video), key=fns)
+        #     if len(images) <= 3:
+        #         print(video)
+        #         continue
+        #     else:    
+        #         for i in range(len(images) - 3):
+        #             self.test_image_list.append([os.path.join(video, images[i]), os.path.join(video, images[i+1]), os.path.join(video, images[i+2]), os.path.join(video, images[i+3])])
 
-        for video in self.test_mask_folders: # video: mask_folder, /dataset/mask/00001
-            masks = sorted(os.listdir(video), key=fns)
-            if len(masks) <= 3:
-                continue
-            else:
-                for i in range(len(masks) - 3):
-                    self.test_mask_list.append([os.path.join(video, masks[i]), os.path.join(video, masks[i+1]), os.path.join(video, masks[i+2]), os.path.join(video, masks[i+3])])
+        # for video in self.test_mask_folders: # video: mask_folder, /dataset/mask/00001
+        #     masks = sorted(os.listdir(video), key=fns)
+        #     if len(masks) <= 3:
+        #         continue
+        #     else:
+        #         for i in range(len(masks) - 3):
+        #             self.test_mask_list.append([os.path.join(video, masks[i]), os.path.join(video, masks[i+1]), os.path.join(video, masks[i+2]), os.path.join(video, masks[i+3])])
 
-        for video in self.test_text_folders: # video: image_folder, /dataset/image/00001
-            texts = sorted(os.listdir(video), key=fns)
-            if len(texts) <= 3:
-                continue
-            else:
-                for i in range(len(texts) - 3):
-                    self.test_text_list.append([os.path.join(video, texts[i]), os.path.join(video, texts[i+1]), os.path.join(video, texts[i+2]), os.path.join(video, texts[i+3])])
+        # for video in self.test_text_folders: # video: image_folder, /dataset/image/00001
+        #     texts = sorted(os.listdir(video), key=fns)
+        #     if len(texts) <= 3:
+        #         continue
+        #     else:
+        #         for i in range(len(texts) - 3):
+        #             self.test_text_list.append([os.path.join(video, texts[i]), os.path.join(video, texts[i+1]), os.path.join(video, texts[i+2]), os.path.join(video, texts[i+3])])
         
         # In-house data
         # self.pdf_image_dir = os.path.join("/data/home/haoningwu/Dataset/StorySalon/", 'StoryBook_finally_checked', 'image_inpainted_finally_checked')
