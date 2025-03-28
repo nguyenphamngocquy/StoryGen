@@ -4,6 +4,7 @@ from torchvision import transforms
 from PIL import Image
 from typing import List, Optional, Union
 
+import argparse
 import numpy as np
 import torch
 import torch.utils.data
@@ -122,30 +123,55 @@ def test(
 
 if __name__ == "__main__":
 
-    pretrained_model_path = '/checkpoint_StorySalon/'
-    logdir = "./inference_StorySalon/"
-    num_inference_steps = 40
-    guidance_scale = 7
-    image_guidance_scale = 3.5
-    num_sample_per_prompt = 10
-    mixed_precision = "fp16"
-    stage = 'auto-regressive' # ["multi-image-condition", "auto-regressive", "no"]
+    # pretrained_model_path = '/checkpoint_StorySalon/'
+    # logdir = "./inference_StorySalon/"
+    # num_inference_steps = 40
+    # guidance_scale = 7
+    # image_guidance_scale = 3.5
+    # num_sample_per_prompt = 10
+    # mixed_precision = "fp16"
+    # stage = 'auto-regressive' # ["multi-image-condition", "auto-regressive", "no"]
     
-    prompt = "The white cat is running after the black-haired man."
-    prev_p = ["The black-haired man", "The white cat."]
-    ref_image = ["./data/boy.jpg", 
-                 ".data/whitecat1.jpg"]
+    # prompt = "The white cat is running after the black-haired man."
+    # prev_p = ["The black-haired man", "The white cat."]
+    # ref_image = ["./data/boy.jpg", 
+    #              ".data/whitecat1.jpg"]
 
-    test(pretrained_model_path, 
-         logdir, 
-         prompt, 
-         prev_p, 
-         ref_image, 
-         num_inference_steps, 
-         guidance_scale, 
-         image_guidance_scale, 
-         num_sample_per_prompt,
-         stage, 
-         mixed_precision)
+    # test(pretrained_model_path, 
+    #      logdir, 
+    #      prompt, 
+    #      prev_p, 
+    #      ref_image, 
+    #      num_inference_steps, 
+    #      guidance_scale, 
+    #      image_guidance_scale, 
+    #      num_sample_per_prompt,
+    #      stage, 
+    #      mixed_precision)
+
+    parser = argparse.ArgumentParser(description="Run the inference test.")
+
+    # Add arguments
+    parser.add_argument("--pretrained_model_path", type=str, help="Path to pretrained model.")
+    parser.add_argument("--logdir", type=str, help="Logging directory.")
+    parser.add_argument("--prompt", type=str, help="Prompt for text-to-image generation.")
+    parser.add_argument("--ref_prompt", type=str, nargs="+", help="Reference text prompts (space-separated list).")
+    parser.add_argument("--ref_image", type=str, nargs="+", help="Reference image paths (space-separated list).")
+    parser.add_argument("--num_inference_steps", type=int, help="Number of inference steps for validation.")
+    parser.add_argument("--guidance_scale", type=float, help="Guidance scale for validation.")
+    parser.add_argument("--image_guidance_scale", type=float, help="Image guidance scale for conditioning.")
+    parser.add_argument("--num_sample_per_prompt", type=int, help="Number of samples per prompt.")
+    parser.add_argument("--stage", type=str, choices=["multi-image-condition", "auto-regressive", "no"], help="Generation stage mode.")
+    parser.add_argument("--mixed_precision", type=str, choices=["fp16", "bf16", "no"], help="Mixed precision mode.")
+
+    args = parser.parse_args()
+    params = {k: v for k, v in vars(args).items() if v is not None}
+
+    # Convert single-item lists to strings
+    for key in ["ref_prompt", "ref_image"]:
+        if key in params and isinstance(params[key], list) and len(params[key]) == 1:
+            params[key] = params[key][0]
+
+    test(**params)
 
 # CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
