@@ -211,7 +211,7 @@ def train(
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=8)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=4)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=1)
 
     lr_scheduler = get_scheduler(

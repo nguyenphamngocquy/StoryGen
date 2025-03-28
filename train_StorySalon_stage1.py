@@ -101,6 +101,21 @@ class SampleLogger:
                     f.write('\n')
             for i, img in enumerate(sequence):
                 img[0].save(os.path.join(self.logdir, f"{step}_{idx}_{sample_seeds[i]}_output.png"))
+
+def print_trainable_parameters(model, model_name):
+    print(f"\n--- Trainable Parameters in {model_name} ---")
+    total_params = 0
+    trainable_params = 0
+    for name, param in model.named_parameters():
+        total_params += param.numel()
+        if param.requires_grad:
+            trainable_params += param.numel()
+            print(f"Trainable: {name} - {param.shape}")
+        else:
+            print(f"Frozen: {name} - {param.shape}")
+    print(f"Total Parameters in {model_name}: {total_params:,}")
+    print(f"Trainable Parameters in {model_name}: {trainable_params:,}")
+    print(f"Percentage Trainable: {100 * trainable_params / total_params:.2f}%\n")
             
 def train(
     pretrained_model_path: str = "./ckpt/stable-diffusion-v1-5/",
@@ -211,7 +226,7 @@ def train(
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=8)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=4)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=1)
 
     lr_scheduler = get_scheduler(
@@ -235,7 +250,11 @@ def train(
     # as these models are only used for inference, keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
     text_encoder.to(accelerator.device, dtype=weight_dtype)
-    
+
+    print_trainable_parameters(unet, "UNet")
+    print_trainable_parameters(vae, "VAE")
+    print_trainable_parameters(text_encoder, "Text Encoder")
+
     # We need to initialize the trackers we use, and also store our configuration.
     # The trackers initializes automatically on the main process.
     if accelerator.is_main_process:
@@ -271,6 +290,7 @@ def train(
         mask = mask[:, [0], :, :].repeat(1, 4, 1, 1) # 3 channels to 4 channels
         mask = F.interpolate(mask, scale_factor = 1 / 8., mode="bilinear", align_corners=False)
         b, c, h, w = image.shape
+        print("Image.shape: ", image.shape)
         
         latents = vae.encode(image).latent_dist.sample()
         latents = latents * 0.18215
@@ -283,8 +303,10 @@ def train(
         
         # Add noise according to the noise magnitude at each timestep (this is the forward diffusion process)
         noisy_latent = noise_scheduler.add_noise(latents, noise, timesteps)
+        print(f"Noisy latent at step {step}: {noisy_latent.shape}")
         # Get the text embedding for conditioning
         encoder_hidden_states = text_encoder(prompt_ids.to(accelerator.device))[0] # B * 77 * 768
+        print(f"Text embedding at step {step}: {encoder_hidden_states.shape}")
         
         # Predict the noise residual
         model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
