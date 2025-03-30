@@ -121,6 +121,9 @@ def print_trainable_parameters(model, model_name):
         params.append((name, list(param.shape), param_count, status))
 
     pd.set_option("display.max_rows", None) # Show all rows
+    pd.set_option("display.max_columns", None)  # Show all columns
+    pd.set_option("display.max_colwidth", None)  #  Show full content of columns
+    pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
     df = pd.DataFrame(params, columns=["Parameter name", "Shape", "Total parameters", "Status"])
     display(df)
 
