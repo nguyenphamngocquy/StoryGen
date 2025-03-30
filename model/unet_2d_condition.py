@@ -426,7 +426,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         blocks = []
         input_shape = str(sample.shape)
         sample = self.conv_in(sample)
-        unet_blocks(accelerator, blocks, "Initial Conv Layer", i, input_shape, str(sample.shape))
+        unet_blocks(accelerator, blocks, "Initial Conv Layer", "", input_shape, str(sample.shape))
 
         # 2.5 image diffusion condition dictionary
         image_dif_conditions = {}
@@ -508,6 +508,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         # Display the UNet blocks and their shapes
         if accelerator.is_main_process:
             print("UNet Info:")
+            pd.set_option("display.max_rows", None) # Show all rows
             df = pd.DataFrame(blocks)
             display(df)
 

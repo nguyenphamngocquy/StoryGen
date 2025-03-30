@@ -120,6 +120,7 @@ def print_trainable_parameters(model, model_name):
 
         params.append((name, list(param.shape), param_count, status))
 
+    pd.set_option("display.max_rows", None) # Show all rows
     df = pd.DataFrame(params, columns=["Parameter name", "Shape", "Total parameters", "Status"])
     display(df)
 
@@ -304,7 +305,7 @@ def train(
         mask = F.interpolate(mask, scale_factor = 1 / 8., mode="bilinear", align_corners=False)
         b, c, h, w = image.shape
         if accelerator.is_main_process:
-            print("Image shape: ", image.shape)
+            print("\nImage shape: ", image.shape)
             print("Mask shape: ", mask.shape)
         
         latents = vae.encode(image).latent_dist.sample()
