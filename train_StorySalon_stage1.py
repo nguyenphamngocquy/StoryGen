@@ -210,10 +210,10 @@ def train(
                 params.requires_grad = True
     
     # Print trainable parameters after modifying requires_grad
-    if accelerator.is_main_process:
-        print_trainable_parameters(text_encoder, "Text Encoder")
-        print_trainable_parameters(vae, "VAE")
-        print_trainable_parameters(unet, "UNet")
+    # if accelerator.is_main_process:
+    #     print_trainable_parameters(text_encoder, "Text Encoder")
+    #     print_trainable_parameters(vae, "VAE")
+    #     print_trainable_parameters(unet, "UNet")
         
     if scale_lr:
         learning_rate = (
