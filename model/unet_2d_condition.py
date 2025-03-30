@@ -19,7 +19,16 @@ from .unet_2d_blocks import (
     get_up_block,
 )
 
+import pandas as pd
+from IPython.display import display
+from accelerate import Accelerator
+
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
+
+def unet_blocks(accelerator, blocks, block_name, index, input_shape, output_shape):
+    """Add block if accelerator is main process."""
+    if accelerator.is_main_process:
+        blocks.append({"Block": f"{block_name} {index}", "Input Shape": str(input_shape), "Output Shape": str(output_shape)})
 
 @dataclass
 class UNet2DConditionOutput(BaseOutput):
@@ -375,8 +384,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             logger.info("Forward upsample size to force interpolation output size.")
             forward_upsample_size = True
 
-        print(f"Input sample shape: {sample.shape}")  # (batch, in_channels, height, width)
-
         # 1. time
         timesteps = timestep
         if not torch.is_tensor(timesteps):
@@ -392,14 +399,16 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
         timesteps = timesteps.expand(sample.shape[0])
         t_emb = self.time_proj(timesteps)
-        print(f"Time embedding shape: {t_emb.shape}")  # (batch, time_embed_dim)
 
         # timesteps does not contain any weights and will always return f32 tensors
         # but time_embedding might actually be running in fp16. so we need to cast here.
         # there might be better ways to encapsulate this.
         t_emb = t_emb.to(dtype=self.dtype)
         emb = self.time_embedding(t_emb)
-        print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
+
+        accelerator = Accelerator()
+        if accelerator.is_main_process:
+            print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
 
         if self.class_embedding is not None:
             if class_labels is None:
@@ -409,13 +418,15 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 class_labels = self.time_proj(class_labels)
 
             class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
-            print(f"Class embedding shape: {class_emb.shape}")
+            if accelerator.is_main_process:
+                print(f"Class embedding shape: {class_emb.shape}")
             emb = emb + class_emb
 
         # 2. pre-process
+        blocks = []
+        input_shape = str(sample.shape)
         sample = self.conv_in(sample)
-        print(f"After initial conv_in: {sample.shape}")  # (batch, block_out_channels[0], height, width)
-
+        unet_blocks(accelerator, blocks, "Initial Conv Layer", i, input_shape, str(sample.shape))
 
         # 2.5 image diffusion condition dictionary
         image_dif_conditions = {}
@@ -423,7 +434,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         # 3. down
         down_block_res_samples = (sample,)
         for i, downsample_block in enumerate(self.down_blocks):
-            print(f"Down Block {i} input shape: {sample.shape}")
+            input_shape = str(sample.shape)
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
                 sample, res_samples, down_img_dif_conditions = downsample_block(
                     hidden_states=sample,
@@ -437,13 +448,12 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                     image_dif_conditions["down_"+str(i+1)+'_2']=down_img_dif_conditions[1].clone()
             else:
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
-
-            print(f"Down Block {i} output shape: {sample.shape}")
+            unet_blocks(accelerator, blocks, "Down Block", i, input_shape, str(sample.shape))
             down_block_res_samples += res_samples
 
         # 4. mid
         if self.mid_block is not None:
-            print(f"Mid Block input shape: {sample.shape}")
+            input_shape = str(sample.shape)
             sample, mid_img_dif_conditions = self.mid_block(
                 sample,
                 emb,
@@ -451,13 +461,13 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 encoder_hidden_states=encoder_hidden_states,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
-            print(f"Mid Block output shape: {sample.shape}")
+            unet_blocks(accelerator, blocks, "Mid Block", i, input_shape, str(sample.shape))
             if len(mid_img_dif_conditions)> 0:
                     image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
 
         # 5. up
         for i, upsample_block in enumerate(self.up_blocks):
-            print(f"Up Block {i} input shape: {sample.shape}")
+            input_shape = str(sample.shape)
             is_final_block = i == len(self.up_blocks) - 1
             res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
             down_block_res_samples = down_block_res_samples[: -len(upsample_block.resnets)]
@@ -485,15 +495,22 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
-            print(f"Up Block {i} output shape: {sample.shape}")
+            unet_blocks(accelerator, blocks, "Up Block", i, input_shape, str(sample.shape))
 
         # 6. post-process
-        print(f"Before final conv_out: {sample.shape}")
+        input_shape = str(sample.shape)
         if self.conv_norm_out:
             sample = self.conv_norm_out(sample)
             sample = self.conv_act(sample)
         sample = self.conv_out(sample)
-        print(f"Final output shape: {sample.shape}")
+        unet_blocks(accelerator, blocks, "Final Conv Layer", "", input_shape, str(sample.shape))
+
+        # Display the UNet blocks and their shapes
+        if accelerator.is_main_process:
+            print("UNet Info:")
+            df = pd.DataFrame(blocks)
+            display(df)
+
         if not return_dict:
             return (sample,image_dif_conditions)
 
