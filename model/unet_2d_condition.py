@@ -120,7 +120,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         time_embedding_type: str = "positional",  # fourier, positional
         conv_in_kernel: int = 3,
         conv_out_kernel: int = 3,
-        step: int = 0,
     ):
         super().__init__()
 
@@ -351,6 +350,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         class_labels: Optional[torch.Tensor] = None,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         return_dict: bool = True,
+        step: int = 0,
     ) -> Union[UNet2DConditionOutput, Tuple]:
         r"""
         Args:
@@ -501,7 +501,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         blocks.append(unet_blocks("Final Conv Layer", "", input_shape, str(sample.shape)))
 
         # Display the UNet blocks and their shapes
-        if self.step == 0:
+        if step == 0:
             print("UNet Info:")
             pd.set_option("display.max_rows", None) # Show all rows
             pd.set_option("display.max_columns", None)  # Show all columns
