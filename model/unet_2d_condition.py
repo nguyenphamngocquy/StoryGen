@@ -22,6 +22,7 @@ from .unet_2d_blocks import (
 import pandas as pd
 from IPython.display import display
 from accelerate import Accelerator
+from torch.cuda.amp import autocast
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -477,15 +478,16 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
-                sample, up_img_dif_conditions = upsample_block(
-                    hidden_states=sample,
-                    temb=emb,
-                    res_hidden_states_tuple=res_samples,
-                    image_hidden_states=image_hidden_states,
-                    encoder_hidden_states=encoder_hidden_states,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                    upsample_size=upsample_size,
-                )
+                with autocast():
+                    sample, up_img_dif_conditions = upsample_block(
+                        hidden_states=sample,
+                        temb=emb,
+                        res_hidden_states_tuple=res_samples,
+                        image_hidden_states=image_hidden_states,
+                        encoder_hidden_states=encoder_hidden_states,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                        upsample_size=upsample_size,
+                    )
                 if len(up_img_dif_conditions)> 0:
                     image_dif_conditions["up_"+str(i)+'_1']=up_img_dif_conditions[0].clone()
                     image_dif_conditions["up_"+str(i)+'_2']=up_img_dif_conditions[1].clone()

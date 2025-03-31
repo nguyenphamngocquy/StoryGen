@@ -7,7 +7,6 @@ from omegaconf import OmegaConf
 
 import argparse
 import pandas as pd
-import gc
 from IPython.display import display
 import torch
 import torch.utils.data
@@ -331,8 +330,6 @@ def train(
             print(f"Text embedding at step {step}: {encoder_hidden_states.shape}")
         
         # Predict the noise residual
-        torch.cuda.empty_cache()  # Release GPU memory
-        gc.collect()  # Release CPU memory
         model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
         
         # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
