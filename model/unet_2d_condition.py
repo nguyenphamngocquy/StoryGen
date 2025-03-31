@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-import torch.utils.checkpoint
+from torch.utils.checkpoint import checkpoint
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.utils import BaseOutput, logging
 
