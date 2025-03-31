@@ -404,7 +404,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         t_emb = t_emb.to(dtype=self.dtype)
         emb = self.time_embedding(t_emb)
 
-        print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
+        if step == 0:
+            print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
 
         if self.class_embedding is not None:
             if class_labels is None:
@@ -414,7 +415,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 class_labels = self.time_proj(class_labels)
 
             class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
-            print(f"Class embedding shape: {class_emb.shape}")
+            if step == 0:
+                print(f"Class embedding shape: {class_emb.shape}")
             emb = emb + class_emb
 
         # 2. pre-process
@@ -502,7 +504,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
 
         # Display the UNet blocks and their shapes
         if step == 0:
-            print("UNet Info:")
+            print("\nUNet Info:")
             pd.set_option("display.max_rows", None) # Show all rows
             pd.set_option("display.max_columns", None)  # Show all columns
             pd.set_option("display.max_colwidth", None)  #  Show full content of columns
@@ -511,7 +513,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             display(df)
 
             # Display the image diffusion conditions
-            print("Image Diffusion Conditions:")
+            print("\nImage Diffusion Conditions:")
             for key, value in image_dif_conditions.items():
                 print(f"Key: {key}, Shape: {value.shape}")
 
