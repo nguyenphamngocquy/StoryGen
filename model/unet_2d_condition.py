@@ -22,14 +22,13 @@ from .unet_2d_blocks import (
 import pandas as pd
 from IPython.display import display
 from accelerate import Accelerator
-from torch.cuda.amp import autocast
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
-def unet_blocks(accelerator, blocks, block_name, index, input_shape, output_shape):
-    """Add block if accelerator is main process."""
-    if accelerator.is_main_process:
-        blocks.append({"Block": f"{block_name} {index}", "Input Shape": str(input_shape), "Output Shape": str(output_shape)})
+# def unet_blocks(accelerator, blocks, block_name, index, input_shape, output_shape):
+#     """Add block if accelerator is main process."""
+#     if accelerator.is_main_process:
+#         blocks.append({"Block": f"{block_name} {index}", "Input Shape": str(input_shape), "Output Shape": str(output_shape)})
 
 @dataclass
 class UNet2DConditionOutput(BaseOutput):
@@ -427,7 +426,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         blocks = []
         input_shape = str(sample.shape)
         sample = self.conv_in(sample)
-        unet_blocks(accelerator, blocks, "Initial Conv Layer", "", input_shape, str(sample.shape))
+        # unet_blocks(accelerator, blocks, "Initial Conv Layer", "", input_shape, str(sample.shape))
 
         # 2.5 image diffusion condition dictionary
         image_dif_conditions = {}
@@ -449,7 +448,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                     image_dif_conditions["down_"+str(i+1)+'_2']=down_img_dif_conditions[1].clone()
             else:
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
-            unet_blocks(accelerator, blocks, "Down Block", i, input_shape, str(sample.shape))
+            # unet_blocks(accelerator, blocks, "Down Block", i, input_shape, str(sample.shape))
             down_block_res_samples += res_samples
 
         # 4. mid
@@ -462,7 +461,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 encoder_hidden_states=encoder_hidden_states,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
-            unet_blocks(accelerator, blocks, "Mid Block", i, input_shape, str(sample.shape))
+            # unet_blocks(accelerator, blocks, "Mid Block", i, input_shape, str(sample.shape))
             if len(mid_img_dif_conditions)> 0:
                     image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
 
@@ -478,16 +477,15 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
-                with autocast():
-                    sample, up_img_dif_conditions = upsample_block(
-                        hidden_states=sample,
-                        temb=emb,
-                        res_hidden_states_tuple=res_samples,
-                        image_hidden_states=image_hidden_states,
-                        encoder_hidden_states=encoder_hidden_states,
-                        cross_attention_kwargs=cross_attention_kwargs,
-                        upsample_size=upsample_size,
-                    )
+                sample, up_img_dif_conditions = upsample_block(
+                    hidden_states=sample,
+                    temb=emb,
+                    res_hidden_states_tuple=res_samples,
+                    image_hidden_states=image_hidden_states,
+                    encoder_hidden_states=encoder_hidden_states,
+                    cross_attention_kwargs=cross_attention_kwargs,
+                    upsample_size=upsample_size,
+                )
                 if len(up_img_dif_conditions)> 0:
                     image_dif_conditions["up_"+str(i)+'_1']=up_img_dif_conditions[0].clone()
                     image_dif_conditions["up_"+str(i)+'_2']=up_img_dif_conditions[1].clone()
@@ -497,7 +495,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
-            unet_blocks(accelerator, blocks, "Up Block", i, input_shape, str(sample.shape))
+            # unet_blocks(accelerator, blocks, "Up Block", i, input_shape, str(sample.shape))
 
         # 6. post-process
         input_shape = str(sample.shape)
@@ -505,7 +503,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             sample = self.conv_norm_out(sample)
             sample = self.conv_act(sample)
         sample = self.conv_out(sample)
-        unet_blocks(accelerator, blocks, "Final Conv Layer", "", input_shape, str(sample.shape))
+        # unet_blocks(accelerator, blocks, "Final Conv Layer", "", input_shape, str(sample.shape))
 
         # Display the UNet blocks and their shapes
         if accelerator.is_main_process:
