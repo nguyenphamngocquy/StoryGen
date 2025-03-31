@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 
 import argparse
 import pandas as pd
+import gc
 from IPython.display import display
 import torch
 import torch.utils.data
@@ -176,7 +177,6 @@ def train(
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     config = UNet2DConditionModel.load_config(pretrained_model_path, subfolder="unet")
     unet = UNet2DConditionModel.from_config(config)
-    unet.enable_gradient_checkpointing()
     pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.fp16.bin', map_location='cpu')
     unet.load_SDM_state_dict(pretrained_sdm)
     # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
@@ -331,6 +331,8 @@ def train(
             print(f"Text embedding at step {step}: {encoder_hidden_states.shape}")
         
         # Predict the noise residual
+        torch.cuda.empty_cache()  # Release GPU memory
+        gc.collect()  # Release CPU memory
         model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
         
         # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
