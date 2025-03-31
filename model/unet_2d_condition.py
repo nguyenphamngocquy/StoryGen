@@ -21,14 +21,11 @@ from .unet_2d_blocks import (
 
 import pandas as pd
 from IPython.display import display
-from accelerate import Accelerator
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
-# def unet_blocks(accelerator, blocks, block_name, index, input_shape, output_shape):
-#     """Add block if accelerator is main process."""
-#     if accelerator.is_main_process:
-#         blocks.append({"Block": f"{block_name} {index}", "Input Shape": str(input_shape), "Output Shape": str(output_shape)})
+def unet_blocks(block_name, index, input_shape, output_shape):
+    return {"Block": f"{block_name} {index}", "Input Shape": str(input_shape), "Output Shape": str(output_shape)}
 
 @dataclass
 class UNet2DConditionOutput(BaseOutput):
@@ -406,9 +403,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         t_emb = t_emb.to(dtype=self.dtype)
         emb = self.time_embedding(t_emb)
 
-        accelerator = Accelerator()
-        if accelerator.is_main_process:
-            print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
+        print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
 
         if self.class_embedding is not None:
             if class_labels is None:
@@ -418,15 +413,14 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 class_labels = self.time_proj(class_labels)
 
             class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
-            if accelerator.is_main_process:
-                print(f"Class embedding shape: {class_emb.shape}")
+            print(f"Class embedding shape: {class_emb.shape}")
             emb = emb + class_emb
 
         # 2. pre-process
         blocks = []
         input_shape = str(sample.shape)
         sample = self.conv_in(sample)
-        # unet_blocks(accelerator, blocks, "Initial Conv Layer", "", input_shape, str(sample.shape))
+        blocks.append(unet_blocks("Initial Conv Layer", "", input_shape, str(sample.shape)))
 
         # 2.5 image diffusion condition dictionary
         image_dif_conditions = {}
@@ -448,7 +442,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                     image_dif_conditions["down_"+str(i+1)+'_2']=down_img_dif_conditions[1].clone()
             else:
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
-            # unet_blocks(accelerator, blocks, "Down Block", i, input_shape, str(sample.shape))
+            blocks.append(unet_blocks("Down Block", i, input_shape, str(sample.shape)))
             down_block_res_samples += res_samples
 
         # 4. mid
@@ -461,7 +455,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 encoder_hidden_states=encoder_hidden_states,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
-            # unet_blocks(accelerator, blocks, "Mid Block", i, input_shape, str(sample.shape))
+            blocks.append(unet_blocks("Mid Block", i, input_shape, str(sample.shape)))
             if len(mid_img_dif_conditions)> 0:
                     image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
 
@@ -495,7 +489,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
-            # unet_blocks(accelerator, blocks, "Up Block", i, input_shape, str(sample.shape))
+            blocks.append(unet_blocks("Up Block", i, input_shape, str(sample.shape)))
 
         # 6. post-process
         input_shape = str(sample.shape)
@@ -503,17 +497,16 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             sample = self.conv_norm_out(sample)
             sample = self.conv_act(sample)
         sample = self.conv_out(sample)
-        # unet_blocks(accelerator, blocks, "Final Conv Layer", "", input_shape, str(sample.shape))
+        blocks.append(unet_blocks("Final Conv Layer", "", input_shape, str(sample.shape)))
 
         # Display the UNet blocks and their shapes
-        if accelerator.is_main_process:
-            print("UNet Info:")
-            pd.set_option("display.max_rows", None) # Show all rows
-            pd.set_option("display.max_columns", None)  # Show all columns
-            pd.set_option("display.max_colwidth", None)  #  Show full content of columns
-            pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
-            df = pd.DataFrame(blocks)
-            display(df)
+        print("UNet Info:")
+        pd.set_option("display.max_rows", None) # Show all rows
+        pd.set_option("display.max_columns", None)  # Show all columns
+        pd.set_option("display.max_colwidth", None)  #  Show full content of columns
+        pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
+        df = pd.DataFrame(blocks)
+        display(df)
 
         if not return_dict:
             return (sample,image_dif_conditions)
@@ -533,14 +526,13 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 # raise ValueError(f"state_dict shape mismatch, SDM {v.shape}, our {state_dict[k].shape}")
         for k in to_delete:
             del state_dict_SDM[k]
-        accelerator = Accelerator()
+
         for k, v in state_dict.items():
             if k not in state_dict_SDM:
                 k_temp = k.replace("attn3", "attn1")
                 k_temp = k_temp.replace("norm4", "norm1")
                 state_dict_SDM[k] = state_dict_SDM[k_temp]
-                if accelerator.is_main_process:
-                    print(f"state_dict key {k} is initialized with self attention.")
+                print(f"state_dict key {k} is initialized with self attention.")
                 
 
         state_dict.update(state_dict_SDM)
