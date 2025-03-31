@@ -301,39 +301,40 @@ def train(
         text_encoder.eval()
         unet.train()
         
-        image = batch["image"].to(dtype=weight_dtype)
-        prompt = batch["prompt"]
-        prompt_ids = tokenizer(prompt, truncation=True, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt").input_ids
-        mask = batch["mask"].to(dtype=weight_dtype)        
-        mask = mask[:, [0], :, :].repeat(1, 4, 1, 1) # 3 channels to 4 channels
-        mask = F.interpolate(mask, scale_factor = 1 / 8., mode="bilinear", align_corners=False)
-        b, c, h, w = image.shape
-        if accelerator.is_main_process:
-            print("\nImage shape: ", image.shape)
-            print("Mask shape: ", mask.shape)
-        
-        latents = vae.encode(image).latent_dist.sample()
-        latents = latents * 0.18215
-        
-        # Sample noise that we'll add
-        noise = torch.randn_like(latents) # [-1, 1]
-        # Sample a random timestep for each image
-        timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (b,), device=latents.device)
-        timesteps = timesteps.long()
-        
-        # Add noise according to the noise magnitude at each timestep (this is the forward diffusion process)
-        noisy_latent = noise_scheduler.add_noise(latents, noise, timesteps)
-        # Get the text embedding for conditioning
-        encoder_hidden_states = text_encoder(prompt_ids.to(accelerator.device))[0] # B * 77 * 768
-        if accelerator.is_main_process:
-            print(f"Noisy latent at step {step}: {noisy_latent.shape}")
-            print(f"Text embedding at step {step}: {encoder_hidden_states.shape}")
-        
-        # Predict the noise residual
-        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
-        
-        # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
-        loss = F.mse_loss(model_pred.float() * (1. - mask), noise.float() * (1 - mask), reduction="mean")
+        with autocast():
+            image = batch["image"].to(dtype=weight_dtype)
+            prompt = batch["prompt"]
+            prompt_ids = tokenizer(prompt, truncation=True, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt").input_ids
+            mask = batch["mask"].to(dtype=weight_dtype)        
+            mask = mask[:, [0], :, :].repeat(1, 4, 1, 1) # 3 channels to 4 channels
+            mask = F.interpolate(mask, scale_factor = 1 / 8., mode="bilinear", align_corners=False)
+            b, c, h, w = image.shape
+            if accelerator.is_main_process:
+                print("\nImage shape: ", image.shape)
+                print("Mask shape: ", mask.shape)
+            
+            latents = vae.encode(image).latent_dist.sample()
+            latents = latents * 0.18215
+            
+            # Sample noise that we'll add
+            noise = torch.randn_like(latents) # [-1, 1]
+            # Sample a random timestep for each image
+            timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (b,), device=latents.device)
+            timesteps = timesteps.long()
+            
+            # Add noise according to the noise magnitude at each timestep (this is the forward diffusion process)
+            noisy_latent = noise_scheduler.add_noise(latents, noise, timesteps)
+            # Get the text embedding for conditioning
+            encoder_hidden_states = text_encoder(prompt_ids.to(accelerator.device))[0] # B * 77 * 768
+            if accelerator.is_main_process:
+                print(f"Noisy latent at step {step}: {noisy_latent.shape}")
+                print(f"Text embedding at step {step}: {encoder_hidden_states.shape}")
+            
+            # Predict the noise residual
+            model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
+            
+            # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
+            loss = F.mse_loss(model_pred.float() * (1. - mask), noise.float() * (1 - mask), reduction="mean")
 
         accelerator.backward(loss)
         if accelerator.sync_gradients:
