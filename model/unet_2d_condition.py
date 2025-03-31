@@ -430,7 +430,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         for i, downsample_block in enumerate(self.down_blocks):
             input_shape = str(sample.shape)
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
-                sample, res_samples, down_img_dif_conditions = downsample_block(
+                sample, res_samples, down_img_dif_conditions = checkpoint(
+                    downsample_block,
                     hidden_states=sample,
                     temb=emb,
                     image_hidden_states=image_hidden_states,
@@ -441,14 +442,15 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                     image_dif_conditions["down_"+str(i+1)+'_1']=down_img_dif_conditions[0].clone()
                     image_dif_conditions["down_"+str(i+1)+'_2']=down_img_dif_conditions[1].clone()
             else:
-                sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
+                sample, res_samples = checkpoint(downsample_block, hidden_states=sample, temb=emb)
             blocks.append(unet_blocks("Down Block", i, input_shape, str(sample.shape)))
             down_block_res_samples += res_samples
 
         # 4. mid
         if self.mid_block is not None:
             input_shape = str(sample.shape)
-            sample, mid_img_dif_conditions = self.mid_block(
+            sample, mid_img_dif_conditions = checkpoint(
+                self.mid_block,
                 sample,
                 emb,
                 image_hidden_states=image_hidden_states,
@@ -471,7 +473,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
-                sample, up_img_dif_conditions = upsample_block(
+                sample, up_img_dif_conditions = checkpoint(
+                    upsample_block,
                     hidden_states=sample,
                     temb=emb,
                     res_hidden_states_tuple=res_samples,
@@ -486,8 +489,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                     image_dif_conditions["up_"+str(i)+'_3']=up_img_dif_conditions[2].clone()
 
             else:
-                sample = upsample_block(
-                    hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
+                sample = checkpoint(
+                    upsample_block, hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
             blocks.append(unet_blocks("Up Block", i, input_shape, str(sample.shape)))
 
@@ -507,6 +510,11 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
         df = pd.DataFrame(blocks)
         display(df)
+
+        # Display the image diffusion conditions
+        print("Image Diffusion Conditions:")
+        for key, value in image_dif_conditions.items():
+            print(f"Key: {key}, Shape: {value.shape}")
 
         if not return_dict:
             return (sample,image_dif_conditions)
