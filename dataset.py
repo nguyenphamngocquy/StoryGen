@@ -264,9 +264,9 @@ class StorySalonDataset(Dataset):
         
         ref_images_1 = []
         for ref_image in ref_images_0:
-            ref_images_1.append(ref_image.resize((512, 512))) 
-        image = image.resize((512, 512))
-        mask = mask.resize((512, 512))
+            ref_images_1.append(ref_image.resize((256, 256))) 
+        image = image.resize((256, 256))
+        mask = mask.resize((256, 256))
         
         ref_images_2 = []
         for ref_image in ref_images_1:
