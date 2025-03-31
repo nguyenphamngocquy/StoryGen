@@ -176,7 +176,7 @@ def train(
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     config = UNet2DConditionModel.load_config(pretrained_model_path, subfolder="unet")
     unet = UNet2DConditionModel.from_config(config)
-    pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.fp16.bin', map_location='cpu')
+    pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin', map_location='cpu')
     unet.load_SDM_state_dict(pretrained_sdm)
     # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
@@ -211,10 +211,10 @@ def train(
                 params.requires_grad = True
     
     # Print trainable parameters after modifying requires_grad
-    # if accelerator.is_main_process:
-    #     print_trainable_parameters(text_encoder, "Text Encoder")
-    #     print_trainable_parameters(vae, "VAE")
-    #     print_trainable_parameters(unet, "UNet")
+    if accelerator.is_main_process:
+        print_trainable_parameters(text_encoder, "Text Encoder")
+        print_trainable_parameters(vae, "VAE")
+        print_trainable_parameters(unet, "UNet")
         
     if scale_lr:
         learning_rate = (
@@ -280,7 +280,6 @@ def train(
     step = 0
 
     if validation_sample_logger is not None and accelerator.is_main_process:
-        print("Validation sample logger parameters: ", validation_sample_logger)
         validation_sample_logger = SampleLogger(**validation_sample_logger, logdir=logdir)
 
     progress_bar = tqdm(range(step, train_steps), disable=not accelerator.is_local_main_process)
@@ -309,9 +308,9 @@ def train(
         mask = mask[:, [0], :, :].repeat(1, 4, 1, 1) # 3 channels to 4 channels
         mask = F.interpolate(mask, scale_factor = 1 / 8., mode="bilinear", align_corners=False)
         b, c, h, w = image.shape
-        if accelerator.is_main_process:
-            print("\nImage shape: ", image.shape)
-            print("Mask shape: ", mask.shape)
+        if accelerator.is_main_process and step == 0:
+            print("\nInput Image: ", image.shape)
+            print("Input Mask: ", mask.shape)
         
         latents = vae.encode(image).latent_dist.sample()
         latents = latents * 0.18215
@@ -326,12 +325,12 @@ def train(
         noisy_latent = noise_scheduler.add_noise(latents, noise, timesteps)
         # Get the text embedding for conditioning
         encoder_hidden_states = text_encoder(prompt_ids.to(accelerator.device))[0] # B * 77 * 768
-        if accelerator.is_main_process:
-            print(f"Noisy latent at step {step}: {noisy_latent.shape}")
-            print(f"Text embedding at step {step}: {encoder_hidden_states.shape}")
+        if accelerator.is_main_process and step == 0:
+            print("Noisy latent: ", noisy_latent.shape)
+            print("Text embedding: ", encoder_hidden_states.shape)
         
         # Predict the noise residual
-        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False)[0]
+        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=None, return_dict=False, step=step)[0]
         
         # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
         loss = F.mse_loss(model_pred.float() * (1. - mask), noise.float() * (1 - mask), reduction="mean")

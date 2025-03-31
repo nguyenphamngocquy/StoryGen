@@ -120,6 +120,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         time_embedding_type: str = "positional",  # fourier, positional
         conv_in_kernel: int = 3,
         conv_out_kernel: int = 3,
+        step: int = 0,
     ):
         super().__init__()
 
@@ -455,7 +456,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 encoder_hidden_states=encoder_hidden_states,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
-            blocks.append(unet_blocks("Mid Block", i, input_shape, str(sample.shape)))
+            blocks.append(unet_blocks("Mid Block", "", input_shape, str(sample.shape)))
             if len(mid_img_dif_conditions)> 0:
                     image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
 
@@ -500,18 +501,19 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         blocks.append(unet_blocks("Final Conv Layer", "", input_shape, str(sample.shape)))
 
         # Display the UNet blocks and their shapes
-        print("UNet Info:")
-        pd.set_option("display.max_rows", None) # Show all rows
-        pd.set_option("display.max_columns", None)  # Show all columns
-        pd.set_option("display.max_colwidth", None)  #  Show full content of columns
-        pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
-        df = pd.DataFrame(blocks)
-        display(df)
+        if self.step == 0:
+            print("UNet Info:")
+            pd.set_option("display.max_rows", None) # Show all rows
+            pd.set_option("display.max_columns", None)  # Show all columns
+            pd.set_option("display.max_colwidth", None)  #  Show full content of columns
+            pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
+            df = pd.DataFrame(blocks)
+            display(df)
 
-        # Display the image diffusion conditions
-        print("Image Diffusion Conditions:")
-        for key, value in image_dif_conditions.items():
-            print(f"Key: {key}, Shape: {value.shape}")
+            # Display the image diffusion conditions
+            print("Image Diffusion Conditions:")
+            for key, value in image_dif_conditions.items():
+                print(f"Key: {key}, Shape: {value.shape}")
 
         if not return_dict:
             return (sample,image_dif_conditions)
