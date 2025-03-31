@@ -293,7 +293,7 @@ def train(
 
     train_data_yielder = make_data_yielder(train_dataloader)
     val_data_yielder = make_data_yielder(val_dataloader)
-
+    unet = torch.nn.DataParallel(unet).cuda()
     while step < train_steps:
         batch = next(train_data_yielder)
         
