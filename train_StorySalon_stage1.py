@@ -176,6 +176,7 @@ def train(
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     config = UNet2DConditionModel.load_config(pretrained_model_path, subfolder="unet")
     unet = UNet2DConditionModel.from_config(config)
+    unet.enable_gradient_checkpointing()
     pretrained_sdm = torch.load('./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.fp16.bin', map_location='cpu')
     unet.load_SDM_state_dict(pretrained_sdm)
     # unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
@@ -293,7 +294,7 @@ def train(
 
     train_data_yielder = make_data_yielder(train_dataloader)
     val_data_yielder = make_data_yielder(val_dataloader)
-    unet = torch.nn.DataParallel(unet).cuda()
+
     while step < train_steps:
         batch = next(train_data_yielder)
         
