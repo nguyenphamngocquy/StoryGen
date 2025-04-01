@@ -209,8 +209,9 @@ def train(
     train_dataset = StorySalonDataset(root=dataset_path, dataset_name='train')
     val_dataset = StorySalonDataset(root=dataset_path, dataset_name='test')
     
-    print(train_dataset.__len__())
-    print(val_dataset.__len__())
+    if accelerator.is_main_process:
+        print("Training dataset size: ", train_dataset.__len__())
+        print("Validate dataset size: ", val_dataset.__len__())
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=4)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=1)
 
@@ -319,6 +320,16 @@ def train(
         for k,v in ref_img_features[0].items():
             img_dif_conditions[k] = torch.cat([ref_img_feature[k] for ref_img_feature in ref_img_features], dim=1)
         
+        if accelerator.is_main_process and step == 0:
+            print("\nt_prev_prompt_ids: ", t_prev_prompt_ids.shape)
+            print("ref_image after vae encoder: ", ref_image_list[0].shape)
+            print("ref_timesteps: ", ref_timesteps.shape)
+            print("noisy_latent: ", noisy_latent.shape)
+            print("encoder_hidden_states: ", encoder_hidden_states.shape)
+            # Display the image diffusion conditions
+            print("\nImage Diffusion Conditions:")
+            for key, value in img_dif_conditions.items():
+                print(f"Key: {key}, Shape: {value.shape}")
         
         # Predict the noise residual
         model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=img_dif_conditions, return_dict=False)[0]

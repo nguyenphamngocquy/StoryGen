@@ -94,7 +94,11 @@ def test(
 
     sample_seeds = torch.randint(0, 100000, (num_sample_per_prompt,))
     sample_seeds = sorted(sample_seeds.numpy().tolist())
-    
+
+    if accelerator.is_main_process:
+        print("ref_images: ", ref_images.shape)
+        print("sample_seeds: ", sample_seeds)
+
     generator = []
     for seed in sample_seeds:
         generator_temp = torch.Generator(device=accelerator.device)
@@ -106,8 +110,8 @@ def test(
             prompt = prompt,
             image_prompt = ref_images,
             prev_prompt = ref_prompt,
-            height = 512,
-            width = 512,
+            height = 256,
+            width = 256,
             generator = generator,
             num_inference_steps = num_inference_steps,
             guidance_scale = guidance_scale,

@@ -142,10 +142,6 @@ class StableDiffusionPipeline(DiffusionPipeline):
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
         text_embeddings = text_embeddings.view(bs_embed * num_images_per_prompt, seq_len, -1)
 
-        print(f"text_input_ids.shape: {text_input_ids.shape}")
-        print(f"text_embeddings.shape (before duplication): {text_embeddings.shape}")
-        print(f"text_embeddings.shape (after duplication): {text_embeddings.shape}")
-
         # get unconditional embeddings for classifier free guidance
         if do_classifier_free_guidance:
             uncond_tokens: List[str]
@@ -196,9 +192,6 @@ class StableDiffusionPipeline(DiffusionPipeline):
             # Here we concatenate the unconditional and text embeddings into a single batch to avoid doing two forward passes
             # text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-
-            print(f"uncond_embeddings.shape: {uncond_embeddings.shape}")
-            print(f"text_embeddings.shape (after concatenation with uncond_embeddings): {text_embeddings.shape}")
 
         return text_embeddings
 
@@ -276,9 +269,6 @@ class StableDiffusionPipeline(DiffusionPipeline):
         # scale the initial noise by the standard deviation required by the scheduler
         latents = latents * self.scheduler.init_noise_sigma
 
-        print(f"Latent shape: {shape}")
-        print(f"Latents initialized shape: {latents.shape}")
-        print(f"Scheduler init_noise_sigma: {self.scheduler.init_noise_sigma}")
         return latents
 
     @torch.no_grad()
@@ -353,12 +343,10 @@ class StableDiffusionPipeline(DiffusionPipeline):
             list of `bool`s denoting whether the corresponding generated image likely represents "not-safe-for-work"
             (nsfw) content, according to the `safety_checker`.
         """
-        print(f"Num inference steps: {num_inference_steps}, Guidance scale: {guidance_scale}")
 
         # 0. Default height and width to unet
         height = height or self.unet.config.sample_size * self.vae_scale_factor
         width = width or self.unet.config.sample_size * self.vae_scale_factor
-        print(f"Height: {height}, Width: {width}")
 
         # 1. Check inputs. Raise error if not correct
         self.check_inputs(prompt, height, width, callback_steps)
@@ -367,16 +355,13 @@ class StableDiffusionPipeline(DiffusionPipeline):
         batch_size = 1 if isinstance(prompt, str) else len(prompt)
         device = self._execution_device
         do_classifier_free_guidance = guidance_scale > 1.0
-        print(f"Batch size: {batch_size}, Num images per prompt: {num_images_per_prompt}")
 
         # 3. Encode input prompt
         text_embeddings = self._encode_prompt(prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt)
+        print("Text embeddings shape after encoding: ", text_embeddings.shape)
         prev_text_embeddings = [] #[3 x (B,2,77,768)]
         for p_prompt in prev_prompt:
             prev_text_embeddings.append(self._encode_prompt(p_prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt))
-        
-        print(f"text_embeddings.shape: {text_embeddings.shape}")
-        print(f"prev_text_embeddings.shape: {prev_text_embeddings.shape}")
 
         # 4. Prepare timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
@@ -395,14 +380,14 @@ class StableDiffusionPipeline(DiffusionPipeline):
             generator,
             latents
         )# [B,4,64,64]
-        print(f"Latents shape after prepare_latents: {latents.shape}")
+        print("Latents shape after prepare_latents: ", latents.shape)
         
         # 6. Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
         # 6.5 Prepare image condition with VAE
         image_prompt = image_prompt.to(device=device, dtype=latents.dtype) # (B,3,3,512,512)
-        print(f"Image prompt shape: {image_prompt.shape}")
+        print("Image prompt shape: ", image_prompt.shape)
         t_image_prompts = torch.transpose(image_prompt, 0, 1) # (3, b, 3, 512, 512)
         ref_image_num = t_image_prompts.shape[0]
         
@@ -413,7 +398,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
         zero_image_prompts = []
         for i in range(ref_image_num):
             zero_image_prompts.append(zero_image_prompt) #[3 x (B,4,64,64)]
-        print(f"Zero image prompt shape after ave encode: {zero_image_prompt[0].shape}")
+        print("Zero image prompt shape after vae encoder: ", zero_image_prompts[0].shape)
 
         image_prompts = [] #[3 x (B,4,64,64)]
         for t_image_prompt in t_image_prompts:
@@ -421,7 +406,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
             new_image_prompt = new_image_prompt * 0.18215 # [B,4,64,64]
             new_image_prompt = new_image_prompt.repeat(num_images_per_prompt, 1, 1, 1)
             image_prompts.append(new_image_prompt)       
-        print(f"Image prompt shape after vae encode: {image_prompts[0].shape}")
+        print("Image prompt shape after vae encoder: ", image_prompts[0].shape)
         
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
@@ -448,18 +433,17 @@ class StableDiffusionPipeline(DiffusionPipeline):
                         noisy_image_prompt = image_prompts[i]
                         noisy_zero_image_prompt = zero_image_prompts[i]
                     
-                    print(f"Noisy Image Prompt Shape: {noisy_image_prompt.shape}")
-                    print(f"Noisy Zero Image Prompt Shape: {noisy_zero_image_prompt.shape}")
                     noisy_image_prompt = torch.cat([noisy_zero_image_prompt, noisy_image_prompt, noisy_image_prompt]) if do_classifier_free_guidance else noisy_image_prompt # [3B,4,64,64]
                     p_text_embeddings = torch.cat([prev_text_embeddings[i], prev_text_embeddings[i][num_images_per_prompt:]]) if do_classifier_free_guidance else prev_text_embeddings
-                                    
+                    print("Noisy image prompt shape: ", noisy_image_prompt.shape)
+                    print("Prompt text embeddings shape: ", p_text_embeddings.shape)
+                      
                     if stage == 'multi-image-condition':
                         img_dif_condition = self.unet(noisy_image_prompt, ref_t, encoder_hidden_states=p_text_embeddings, return_dict=False)[1]
                     elif stage == 'auto-regressive':
                         img_dif_condition =  self.unet(noisy_image_prompt, ref_t * (ref_image_num - i), encoder_hidden_states=p_text_embeddings, return_dict=False)[1]
                     else:
                         img_dif_condition = None
-                    print(f"Image condition shape: {img_dif_condition.shape}")
                     img_conditions.append(img_dif_condition)
 
                 if stage == 'multi-image-condition' or stage == 'auto-regressive':
@@ -468,25 +452,27 @@ class StableDiffusionPipeline(DiffusionPipeline):
                       img_dif_conditions[k] = torch.cat([img_condition[k] for img_condition in img_conditions], dim=1)
                 else:
                   img_dif_conditions = None
-                print(f"Image condition shape after concatenation: {img_dif_conditions['sample'].shape}")
+                print("Image condition shape after concatenation:")
+                for k, v in img_dif_conditions.items():
+                    print(f"Key: {k}, Shape: {v.shape}")
                 
                 # expand the inputs if we are doing classifier free guidance
                 t_embeddings = torch.cat([text_embeddings[:num_images_per_prompt], text_embeddings]) if do_classifier_free_guidance else text_embeddings
-
+                print("Text embeddings shape after concatenation: ", t_embeddings.shape)
                 latent_model_input = torch.cat([latents] * 3) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-                print(f"Latent model input shape: {latent_model_input.shape}")
+                print("Latent model input shape: ", latent_model_input.shape)
                 # predict the noise residual
                 noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False)[0].to(dtype=latents.dtype)
-                print(f"Noise Prediction Shape: {noise_pred.shape}")
+                print("Noise prediction shape: ", noise_pred.shape)
                 # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=None).sample.to(dtype=latents.dtype)
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_image, noise_pred_all = noise_pred.chunk(3)
                     noise_pred = noise_pred_uncond + image_guidance_scale * (noise_pred_image - noise_pred_uncond)  + guidance_scale * (noise_pred_all - noise_pred_image)
-                    print(f"Noise_pred_uncond shape: {noise_pred_uncond.shape}")
-                    print(f"Noise_pred_image shape: {noise_pred_image.shape}")
-                    print(f"Noise_pred_all shape: {noise_pred_all.shape}")
+                    print("Noise_pred_uncond shape: ", noise_pred_uncond.shape)
+                    print("Noise_pred_image shape: ", noise_pred_image.shape)
+                    print("Noise_pred_all shape: ", noise_pred_all.shape)
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
@@ -501,7 +487,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
 
         # 8. Post-processing
         image = self.decode_latents(latents)
-        print(f"Decoded image shape: {image.shape}")
+        print("Decoded image shape: ", image.shape)
         
         # 9. Run safety checker
         has_nsfw_concept = None
