@@ -292,6 +292,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
+        step: int = 0,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -358,7 +359,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
 
         # 3. Encode input prompt
         text_embeddings = self._encode_prompt(prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt)
-        print("\nText embeddings shape after encoding: ", text_embeddings.shape)
+        if step == 0:
+            print("\nText embeddings shape after encoding: ", text_embeddings.shape)
         prev_text_embeddings = [] #[3 x (B,2,77,768)]
         for p_prompt in prev_prompt:
             prev_text_embeddings.append(self._encode_prompt(p_prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt))
@@ -380,14 +382,12 @@ class StableDiffusionPipeline(DiffusionPipeline):
             generator,
             latents
         )# [B,4,64,64]
-        print("Latents shape after prepare_latents: ", latents.shape)
         
         # 6. Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
         # 6.5 Prepare image condition with VAE
         image_prompt = image_prompt.to(device=device, dtype=latents.dtype) # (B,3,3,512,512)
-        print("Image prompt shape: ", image_prompt.shape)
         t_image_prompts = torch.transpose(image_prompt, 0, 1) # (3, b, 3, 512, 512)
         ref_image_num = t_image_prompts.shape[0]
         
@@ -398,15 +398,18 @@ class StableDiffusionPipeline(DiffusionPipeline):
         zero_image_prompts = []
         for i in range(ref_image_num):
             zero_image_prompts.append(zero_image_prompt) #[3 x (B,4,64,64)]
-        print("Zero image prompt shape after vae encoder: ", zero_image_prompts[0].shape)
 
         image_prompts = [] #[3 x (B,4,64,64)]
         for t_image_prompt in t_image_prompts:
             new_image_prompt = self.vae.encode(t_image_prompt).latent_dist.sample()
             new_image_prompt = new_image_prompt * 0.18215 # [B,4,64,64]
             new_image_prompt = new_image_prompt.repeat(num_images_per_prompt, 1, 1, 1)
-            image_prompts.append(new_image_prompt)       
-        print("Image prompt shape after vae encoder: ", image_prompts[0].shape)
+            image_prompts.append(new_image_prompt)
+        if step == 0:
+            print("Latents shape after prepare_latents: ", latents.shape)
+            print("Image prompt shape: ", image_prompt.shape)
+            print("Zero image prompt shape after vae encoder: ", zero_image_prompts[0].shape)
+            print("Image prompt shape after vae encoder: ", image_prompts[0].shape)
         
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
@@ -415,12 +418,12 @@ class StableDiffusionPipeline(DiffusionPipeline):
         
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
-                step = i
-                print(f"\nStep {step}, Timestep: {t}, Latents shape: {latents.shape}")
                 # Small noise
                 ref_t = t / 10
                 ref_t = ref_t.long()
-                print(f"Reference Timestep (ref_t): {ref_t}")
+                if step == 0:
+                    print(f"\nStep {i}, Timestep: {t}, Latents shape: {latents.shape}")
+                    print(f"Reference Timestep (ref_t): {ref_t}")
 
                 img_conditions = []
                 for i in range(ref_image_num):
@@ -436,7 +439,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
                     
                     noisy_image_prompt = torch.cat([noisy_zero_image_prompt, noisy_image_prompt, noisy_image_prompt]) if do_classifier_free_guidance else noisy_image_prompt # [3B,4,64,64]
                     p_text_embeddings = torch.cat([prev_text_embeddings[i], prev_text_embeddings[i][num_images_per_prompt:]]) if do_classifier_free_guidance else prev_text_embeddings
-                    if step == 0:
+                    if step == 0 and i == 0:
                         print("Noisy image prompt shape: ", noisy_image_prompt.shape)
                         print("Prompt text embeddings shape: ", p_text_embeddings.shape)
                       
@@ -452,7 +455,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
                     img_dif_conditions = {}
                     for k,v in img_conditions[0].items():
                         img_dif_conditions[k] = torch.cat([img_condition[k] for img_condition in img_conditions], dim=1)
-                    if step == 0:
+                    if step == 0 and i == 0:
                         print("Image condition shape after concatenation:")
                         for k, v in img_dif_conditions.items():
                             print(f"Key: {k}, Shape: {v.shape}")
@@ -463,12 +466,12 @@ class StableDiffusionPipeline(DiffusionPipeline):
                 t_embeddings = torch.cat([text_embeddings[:num_images_per_prompt], text_embeddings]) if do_classifier_free_guidance else text_embeddings
                 latent_model_input = torch.cat([latents] * 3) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-                if step == 0:
+                if step == 0 and i == 0:
                     print("Text embeddings shape after concatenation: ", t_embeddings.shape)
                     print("Latent model input shape: ", latent_model_input.shape)
                 # predict the noise residual
                 noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False, step=step)[0].to(dtype=latents.dtype)
-                if step == 0:
+                if step == 0 and i == 0:
                     print("\nNoise prediction shape: ", noise_pred.shape)
                 # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=None).sample.to(dtype=latents.dtype)
                 # perform guidance

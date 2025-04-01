@@ -78,6 +78,7 @@ class SampleLogger:
                 guidance_scale=self.guidance_scale,
                 image_guidance_scale = self.image_guidance_scale,
                 num_images_per_prompt=self.num_sample_per_prompt,
+                step=step,
             ).images
 
             image = (image + 1.) / 2. # for visualization
@@ -280,7 +281,7 @@ def train(
         validation_sample_logger = SampleLogger(**validation_sample_logger, logdir=logdir)
 
     progress_bar = tqdm(range(step, train_steps), disable=not accelerator.is_local_main_process)
-    progress_bar.set_description("\nSteps")
+    progress_bar.set_description("Steps")
 
     def make_data_yielder(dataloader):
         while True:
