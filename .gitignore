@@ -2,4 +2,5 @@
 !.gitignore
 stage1.log
 stage2.log
+pytorch_env
 __pycache__

@@ -283,7 +283,7 @@ def train(
         validation_sample_logger = SampleLogger(**validation_sample_logger, logdir=logdir)
 
     progress_bar = tqdm(range(step, train_steps), disable=not accelerator.is_local_main_process)
-    progress_bar.set_description("Steps")
+    progress_bar.set_description("\nSteps")
 
     def make_data_yielder(dataloader):
         while True:

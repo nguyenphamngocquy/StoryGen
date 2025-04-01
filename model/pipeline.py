@@ -415,7 +415,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
         
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
-                print(f"\nStep {i}, Timestep: {t}, Latents shape: {latents.shape}")
+                step = i
+                print(f"\nStep {step}, Timestep: {t}, Latents shape: {latents.shape}")
                 # Small noise
                 ref_t = t / 10
                 ref_t = ref_t.long()
@@ -435,13 +436,14 @@ class StableDiffusionPipeline(DiffusionPipeline):
                     
                     noisy_image_prompt = torch.cat([noisy_zero_image_prompt, noisy_image_prompt, noisy_image_prompt]) if do_classifier_free_guidance else noisy_image_prompt # [3B,4,64,64]
                     p_text_embeddings = torch.cat([prev_text_embeddings[i], prev_text_embeddings[i][num_images_per_prompt:]]) if do_classifier_free_guidance else prev_text_embeddings
-                    print("Noisy image prompt shape: ", noisy_image_prompt.shape)
-                    print("Prompt text embeddings shape: ", p_text_embeddings.shape)
+                    if step == 0:
+                        print("Noisy image prompt shape: ", noisy_image_prompt.shape)
+                        print("Prompt text embeddings shape: ", p_text_embeddings.shape)
                       
                     if stage == 'multi-image-condition':
-                        img_dif_condition = self.unet(noisy_image_prompt, ref_t, encoder_hidden_states=p_text_embeddings, return_dict=False)[1]
+                        img_dif_condition = self.unet(noisy_image_prompt, ref_t, encoder_hidden_states=p_text_embeddings, return_dict=False, step=step)[1]
                     elif stage == 'auto-regressive':
-                        img_dif_condition =  self.unet(noisy_image_prompt, ref_t * (ref_image_num - i), encoder_hidden_states=p_text_embeddings, return_dict=False)[1]
+                        img_dif_condition =  self.unet(noisy_image_prompt, ref_t * (ref_image_num - i), encoder_hidden_states=p_text_embeddings, return_dict=False, step=step)[1]
                     else:
                         img_dif_condition = None
                     img_conditions.append(img_dif_condition)
@@ -450,22 +452,24 @@ class StableDiffusionPipeline(DiffusionPipeline):
                     img_dif_conditions = {}
                     for k,v in img_conditions[0].items():
                         img_dif_conditions[k] = torch.cat([img_condition[k] for img_condition in img_conditions], dim=1)
-
-                    print("Image condition shape after concatenation:")
-                    for k, v in img_dif_conditions.items():
-                        print(f"Key: {k}, Shape: {v.shape}")
+                    if step == 0:
+                        print("Image condition shape after concatenation:")
+                        for k, v in img_dif_conditions.items():
+                            print(f"Key: {k}, Shape: {v.shape}")
                 else:
                     img_dif_conditions = None
                 
                 # expand the inputs if we are doing classifier free guidance
                 t_embeddings = torch.cat([text_embeddings[:num_images_per_prompt], text_embeddings]) if do_classifier_free_guidance else text_embeddings
-                print("Text embeddings shape after concatenation: ", t_embeddings.shape)
                 latent_model_input = torch.cat([latents] * 3) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-                print("Latent model input shape: ", latent_model_input.shape)
+                if step == 0:
+                    print("Text embeddings shape after concatenation: ", t_embeddings.shape)
+                    print("Latent model input shape: ", latent_model_input.shape)
                 # predict the noise residual
-                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False)[0].to(dtype=latents.dtype)
-                print("\nNoise prediction shape: ", noise_pred.shape)
+                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False, step=step)[0].to(dtype=latents.dtype)
+                if step == 0:
+                    print("\nNoise prediction shape: ", noise_pred.shape)
                 # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=None).sample.to(dtype=latents.dtype)
                 # perform guidance
                 if do_classifier_free_guidance:

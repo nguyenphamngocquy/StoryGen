@@ -101,7 +101,34 @@ class SampleLogger:
                     f.write('\n')
             for i, img in enumerate(sequence):
                 img[0].save(os.path.join(self.logdir, f"{step}_{idx}_{sample_seeds[i]}_output.png"))
-            
+
+def print_trainable_parameters(model, model_name):
+    print(f"\n--- Parameters in {model_name} ---")
+    params = []
+    total_params = 0
+    trainable_params = 0
+    for name, param in model.named_parameters():
+        param_count = param.numel()
+        total_params += param_count
+        if param.requires_grad:
+            trainable_params += param_count
+            status = "Trainable"
+        else:
+            status = "Frozen"
+
+        params.append((name, list(param.shape), param_count, status))
+
+    pd.set_option("display.max_rows", None) # Show all rows
+    pd.set_option("display.max_columns", None)  # Show all columns
+    pd.set_option("display.max_colwidth", None)  #  Show full content of columns
+    pd.set_option("display.expand_frame_repr", False)  # Don't wrap lines in the DataFrame
+    df = pd.DataFrame(params, columns=["Parameter name", "Shape", "Total parameters", "Status"])
+    display(df)
+
+    print(f"Total Parameters in {model_name}: {total_params:,}")
+    print(f"Trainable Parameters in {model_name}: {trainable_params:,}")
+    print(f"Percentage Trainable: {100 * trainable_params / total_params:.2f}%\n")
+
 def train(
     pretrained_model_path: str = "./stage1_log/",
     logdir: str = "./stage2_log/",
@@ -179,6 +206,12 @@ def train(
                 params.requires_grad = True
         # for params in module.parameters():
         #     params.requires_grad = True
+    
+    # Print trainable parameters after modifying requires_grad
+    if accelerator.is_main_process:
+        print_trainable_parameters(text_encoder, "Text Encoder")
+        print_trainable_parameters(vae, "VAE")
+        print_trainable_parameters(unet, "UNet")
 
     if scale_lr:
         learning_rate = (
@@ -247,7 +280,7 @@ def train(
         validation_sample_logger = SampleLogger(**validation_sample_logger, logdir=logdir)
 
     progress_bar = tqdm(range(step, train_steps), disable=not accelerator.is_local_main_process)
-    progress_bar.set_description("Steps")
+    progress_bar.set_description("\nSteps")
 
     def make_data_yielder(dataloader):
         while True:
@@ -313,7 +346,7 @@ def train(
             if (p < 0.3) or (0.3 <= p < 0.6 and i > 0) or (p >= 0.6 and i > 1):                            
                 noisy_ref_image = noise_scheduler.add_noise(ref_image_list[i], ref_noise, ref_timesteps * (3 - i))
                 prev_encoder_hidden_states = text_encoder(t_prev_prompt_ids[i].to(accelerator.device))[0]
-                img_dif_conditions = unet(noisy_ref_image, ref_timesteps * (3 - i), encoder_hidden_states=prev_encoder_hidden_states, return_dict=False)[1]
+                img_dif_conditions = unet(noisy_ref_image, ref_timesteps * (3 - i), encoder_hidden_states=prev_encoder_hidden_states, return_dict=False, step=step)[1]
                 ref_img_features.append(img_dif_conditions)       
         
         img_dif_conditions = {}
@@ -332,7 +365,7 @@ def train(
                 print(f"Key: {key}, Shape: {value.shape}")
         
         # Predict the noise residual
-        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=img_dif_conditions, return_dict=False)[0]
+        model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=img_dif_conditions, return_dict=False, step=step)[0]
         
         # loss = F.mse_loss(model_pred.float(), noise.float(), reduction="mean")
         loss = F.mse_loss(model_pred.float() * (1. - mask), noise.float() * (1 - mask), reduction="mean")

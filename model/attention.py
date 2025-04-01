@@ -282,8 +282,6 @@ class BasicTransformerBlock(nn.Module):
             norm_hidden_states_i = (
                 self.norm4(hidden_states, timestep) if self.use_ada_layer_norm else self.norm4(hidden_states)
             )
-            print("norm_hidden_states_i: ", norm_hidden_states_i.shape) # [6, 1024, 320]
-            print("image_hidden_states: ", image_hidden_states.shape)   # [6, 768, 640]
             attn_output_i = self.attn3(
                 norm_hidden_states_i,
                 encoder_hidden_states=image_hidden_states,
