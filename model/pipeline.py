@@ -493,7 +493,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
         # 8. Post-processing
         image = self.decode_latents(latents)
         if step == 0:
-            print("Decoded image shape: ", image.shape)
+            print("\nDecoded image shape: ", image.shape)
         
         # 9. Run safety checker
         has_nsfw_concept = None

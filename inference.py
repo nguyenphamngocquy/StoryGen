@@ -36,9 +36,8 @@ def test(
     mixed_precision: Optional[str] = "fp16" ,
 ):
     time_string = get_time_string()
-    
+    logdir = os.path.join(logdir, f"_{time_string}")
     if not os.path.exists(logdir):
-        logdir = os.path.join(logdir, f"_{time_string}")
         os.makedirs(logdir)
     accelerator = Accelerator(mixed_precision=mixed_precision)
 

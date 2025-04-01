@@ -1,6 +1,5 @@
 .DS_Store
 !.gitignore
-stage1.log
-stage2.log
+*.log
 pytorch_env
 __pycache__

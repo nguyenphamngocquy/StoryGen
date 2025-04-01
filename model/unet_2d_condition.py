@@ -513,9 +513,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             display(df)
 
             # Display the image diffusion conditions
-            print("\nImage Diffusion Conditions:")
-            for key, value in image_dif_conditions.items():
-                print(f"Key: {key}, Shape: {value.shape}")
+            if image_dif_conditions:
+                print("\nImage Diffusion Conditions:")
+                for key, value in image_dif_conditions.items():
+                    print(f"{key}: {value.shape}")
 
         if not return_dict:
             return (sample,image_dif_conditions)
