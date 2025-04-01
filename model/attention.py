@@ -95,7 +95,6 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         # 1. Input
         batch, _, height, width = hidden_states.shape
         residual = hidden_states
-        print("hidden_states in Transformer2DModel (attn): ", hidden_states.shape)
 
         hidden_states = self.norm(hidden_states)
         if not self.use_linear_projection:
@@ -122,7 +121,6 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
             hidden_states = hidden_states.reshape(batch, height, width, inner_dim).permute(0, 3, 1, 2).contiguous()
 
         output = hidden_states + residual
-        print("output in Transformer2DModel (attn): ", output.shape)
 
         if not return_dict:
             return (output,img_dif_condition)
@@ -281,9 +279,6 @@ class BasicTransformerBlock(nn.Module):
         
         # 3. Image-Cross-Attn
         if image_hidden_states is not None:
-            print("Use ada layer norm: ", self.use_ada_layer_norm)
-            print("hidden_states: ", hidden_states.shape) # [6, 1024, 320]
-            print("timestep: ", timestep.shape)
             norm_hidden_states_i = (
                 self.norm4(hidden_states, timestep) if self.use_ada_layer_norm else self.norm4(hidden_states)
             )
