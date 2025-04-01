@@ -516,7 +516,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             print("\nImage Diffusion Conditions:")
             for key, value in image_dif_conditions.items():
                 print(f"Key: {key}, Shape: {value.shape}")
-            print("\n")
 
         if not return_dict:
             return (sample,image_dif_conditions)

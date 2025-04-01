@@ -327,7 +327,7 @@ def train(
             print("noisy_latent: ", noisy_latent.shape)
             print("encoder_hidden_states: ", encoder_hidden_states.shape)
             # Display the image diffusion conditions
-            print("\nImage Diffusion Conditions:")
+            print("\nImage diffusion conditions after concatenation:")
             for key, value in img_dif_conditions.items():
                 print(f"Key: {key}, Shape: {value.shape}")
         
