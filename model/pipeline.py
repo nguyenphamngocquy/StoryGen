@@ -471,9 +471,6 @@ class StableDiffusionPipeline(DiffusionPipeline):
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_image, noise_pred_all = noise_pred.chunk(3)
                     noise_pred = noise_pred_uncond + image_guidance_scale * (noise_pred_image - noise_pred_uncond)  + guidance_scale * (noise_pred_all - noise_pred_image)
-                    print("Noise_pred_uncond shape: ", noise_pred_uncond.shape)
-                    print("Noise_pred_image shape: ", noise_pred_image.shape)
-                    print("Noise_pred_all shape: ", noise_pred_all.shape)
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample

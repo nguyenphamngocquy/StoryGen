@@ -95,6 +95,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         # 1. Input
         batch, _, height, width = hidden_states.shape
         residual = hidden_states
+        print("hidden_states in Transformer2DModel (attn): ", hidden_states.shape)
 
         hidden_states = self.norm(hidden_states)
         if not self.use_linear_projection:
@@ -121,6 +122,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
             hidden_states = hidden_states.reshape(batch, height, width, inner_dim).permute(0, 3, 1, 2).contiguous()
 
         output = hidden_states + residual
+        print("output in Transformer2DModel (attn): ", output.shape)
 
         if not return_dict:
             return (output,img_dif_condition)

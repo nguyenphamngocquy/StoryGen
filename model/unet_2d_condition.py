@@ -405,7 +405,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         emb = self.time_embedding(t_emb)
 
         if step == 0:
-            print(f"Processed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
+            print(f"\nProcessed time embedding shape: {emb.shape}")  # (batch, time_embed_dim)
 
         if self.class_embedding is not None:
             if class_labels is None:
@@ -432,8 +432,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         down_block_res_samples = (sample,)
         for i, downsample_block in enumerate(self.down_blocks):
             input_shape = str(sample.shape)
-            if step == 0 and image_hidden_states is not None:
-                print("Image hidden states shape: ", image_hidden_states.shape)
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
                 sample, res_samples, down_img_dif_conditions = downsample_block(
                     hidden_states=sample,
@@ -462,7 +460,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
             )
             blocks.append(unet_blocks("Mid Block", "", input_shape, str(sample.shape)))
             if len(mid_img_dif_conditions)> 0:
-                    image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
+                image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
 
         # 5. up
         for i, upsample_block in enumerate(self.up_blocks):
