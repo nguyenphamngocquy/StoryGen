@@ -283,6 +283,7 @@ class BasicTransformerBlock(nn.Module):
         if image_hidden_states is not None:
             print("Use ada layer norm: ", self.use_ada_layer_norm)
             print("hidden_states: ", hidden_states.shape) # [6, 1024, 320]
+            print("timestep: ", timestep.shape)
             norm_hidden_states_i = (
                 self.norm4(hidden_states, timestep) if self.use_ada_layer_norm else self.norm4(hidden_states)
             )
