@@ -215,7 +215,7 @@ class BasicTransformerBlock(nn.Module):
         print("dim: ", dim)
         print("num_attention_heads: ", num_attention_heads)
         print("attention_head_dim: ", attention_head_dim)
-        print("cross_attention_dim: ", cross_attention_dim)"
+        print("cross_attention_dim: ", cross_attention_dim)
         self.attn3 = CrossAttention(
             query_dim=dim,
             cross_attention_dim=dim,#4,#dim, # the same as query_dim
