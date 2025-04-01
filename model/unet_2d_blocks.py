@@ -376,10 +376,10 @@ class CrossAttnDownBlock2D(nn.Module):
     ):
         output_states = ()
         down_img_dif_conditions = []
-        print("hidden_states.shape: ", hidden_states.shape)
-        ln = 4 - hidden_states.shape[2] // 16
+        
+        ln = 4 - hidden_states.shape[2] // 8
         if ln <1: ln=1 # the number of the block: 1 or 2 or 3
-        print("ln: ", ln)
+
         if image_hidden_states is None:
             # No image_hidden_states, ref_image cycle, need img_dif_condition
             for resnet, attn in zip(self.resnets, self.attentions):
@@ -597,7 +597,7 @@ class CrossAttnUpBlock2D(nn.Module):
     ):
         up_img_dif_conditions = []
 
-        ln = hidden_states.shape[2] // 16
+        ln = hidden_states.shape[2] // 8
         if ln > 3: ln=3 # the number of the block: 1 or 2 or 3
 
         if image_hidden_states is None:
