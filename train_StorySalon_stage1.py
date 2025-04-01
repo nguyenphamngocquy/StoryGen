@@ -131,7 +131,7 @@ def print_trainable_parameters(model, model_name):
     print(f"Total Parameters in {model_name}: {total_params:,}")
     print(f"Trainable Parameters in {model_name}: {trainable_params:,}")
     print(f"Percentage Trainable: {100 * trainable_params / total_params:.2f}%\n")
-            
+
 def train(
     pretrained_model_path: str = "./ckpt/stable-diffusion-v1-5/",
     logdir: str = "./stage1_log/",
@@ -216,7 +216,7 @@ def train(
         print_trainable_parameters(text_encoder, "Text Encoder")
         print_trainable_parameters(vae, "VAE")
         print_trainable_parameters(unet, "UNet")
-        
+
     if scale_lr:
         learning_rate = (
             learning_rate * gradient_accumulation_steps * train_batch_size * accelerator.num_processes
