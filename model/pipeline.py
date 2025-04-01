@@ -358,7 +358,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
 
         # 3. Encode input prompt
         text_embeddings = self._encode_prompt(prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt)
-        print("Text embeddings shape after encoding: ", text_embeddings.shape)
+        print("\nText embeddings shape after encoding: ", text_embeddings.shape)
         prev_text_embeddings = [] #[3 x (B,2,77,768)]
         for p_prompt in prev_prompt:
             prev_text_embeddings.append(self._encode_prompt(p_prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt))
@@ -415,7 +415,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
         
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
-                print(f"Step {i}, Timestep: {t}, Latents shape: {latents.shape}")
+                print(f"\nStep {i}, Timestep: {t}, Latents shape: {latents.shape}")
                 # Small noise
                 ref_t = t / 10
                 ref_t = ref_t.long()
@@ -465,7 +465,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
                 print("Latent model input shape: ", latent_model_input.shape)
                 # predict the noise residual
                 noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False)[0].to(dtype=latents.dtype)
-                print("Noise prediction shape: ", noise_pred.shape)
+                print("\nNoise prediction shape: ", noise_pred.shape)
                 # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=None).sample.to(dtype=latents.dtype)
                 # perform guidance
                 if do_classifier_free_guidance:

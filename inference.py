@@ -84,7 +84,7 @@ def test(
     
     ref_images= []
     for id in ref_image:
-        r_image = Image.open(id).convert('RGB').resize((512, 512))
+        r_image = Image.open(id).convert('RGB').resize((256, 256))
         r_image = transforms.ToTensor()(r_image)
         ref_images.append(np.ascontiguousarray(r_image))
     ref_images = torch.from_numpy(np.ascontiguousarray(ref_images)).float()
