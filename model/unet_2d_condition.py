@@ -432,6 +432,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         down_block_res_samples = (sample,)
         for i, downsample_block in enumerate(self.down_blocks):
             input_shape = str(sample.shape)
+            if step == 0 and image_hidden_states is not None:
+                print("Image hidden states shape: ", image_hidden_states.shape)
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
                 sample, res_samples, down_img_dif_conditions = downsample_block(
                     hidden_states=sample,

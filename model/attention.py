@@ -212,10 +212,6 @@ class BasicTransformerBlock(nn.Module):
             self.norm2 = None
 
         # 3. Image-Cross_Attn
-        print("dim: ", dim)
-        print("num_attention_heads: ", num_attention_heads)
-        print("attention_head_dim: ", attention_head_dim)
-        print("cross_attention_dim: ", cross_attention_dim)
         self.attn3 = CrossAttention(
             query_dim=dim,
             cross_attention_dim=dim,#4,#dim, # the same as query_dim
@@ -283,6 +279,8 @@ class BasicTransformerBlock(nn.Module):
         
         # 3. Image-Cross-Attn
         if image_hidden_states is not None:
+            print("Use ada layer norm: ", self.use_ada_layer_norm)
+            print("hidden_states: ", hidden_states.shape) # [6, 1024, 320]
             norm_hidden_states_i = (
                 self.norm4(hidden_states, timestep) if self.use_ada_layer_norm else self.norm4(hidden_states)
             )
