@@ -155,6 +155,8 @@ def train(
     adam_epsilon: float = 1e-08,
     max_grad_norm: float = 1.0,
     checkpointing_steps: int = 2000,
+    height: int = 512,
+    width: int = 512,
 ):
     
     args = get_function_args()
@@ -242,8 +244,8 @@ def train(
         eps=adam_epsilon,
     )
 
-    train_dataset = StorySalonDataset(root=dataset_path, dataset_name='train')
-    val_dataset = StorySalonDataset(root=dataset_path, dataset_name='test')
+    train_dataset = StorySalonDataset(root=dataset_path, dataset_name='train', height=height, width=width)
+    val_dataset = StorySalonDataset(root=dataset_path, dataset_name='test', height=height, width=width)
     
     if accelerator.is_main_process:
         print("Training dataset size: ", train_dataset.__len__())
@@ -438,6 +440,8 @@ if __name__ == "__main__":
     parser.add_argument("--adam_epsilon", type=float, help="Adam epsilon value.")
     parser.add_argument("--max_grad_norm", type=float, help="Max gradient norm.")
     parser.add_argument("--checkpointing_steps", type=int, help="Checkpoint save frequency.")
+    parser.add_argument("--height", type=int, help="Height of output image (must be divisible by 8).")
+    parser.add_argument("--width", type=int, help="Width of output image (must be divisible by 8).")
 
     # Arguments for validation_sample_logger dictionary
     parser.add_argument("--num_inference_steps", type=int, help="Number of inference steps for validation.")

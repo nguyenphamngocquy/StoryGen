@@ -55,7 +55,7 @@ class SimpleDataset(Dataset):
 
 
 class StorySalonDataset(Dataset):
-    def __init__(self, root, dataset_name):
+    def __init__(self, root, dataset_name, height, width):
         self.root = root
         self.dataset_name = dataset_name
 
@@ -65,6 +65,8 @@ class StorySalonDataset(Dataset):
         self.test_image_list = []
         self.test_mask_list = []
         self.test_text_list = []
+        self.height = height
+        self.width = width
 
         self.PDF_test_set = []
         self.video_test_set = []
@@ -264,9 +266,9 @@ class StorySalonDataset(Dataset):
         
         ref_images_1 = []
         for ref_image in ref_images_0:
-            ref_images_1.append(ref_image.resize((256, 256))) 
-        image = image.resize((256, 256))
-        mask = mask.resize((256, 256))
+            ref_images_1.append(ref_image.resize((self.height, self.width))) 
+        image = image.resize((self.height, self.width))
+        mask = mask.resize((self.height, self.width))
         
         ref_images_2 = []
         for ref_image in ref_images_1:

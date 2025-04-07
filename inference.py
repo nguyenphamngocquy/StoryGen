@@ -34,6 +34,8 @@ def test(
     num_sample_per_prompt: int = 10,
     stage: str = "multi-image-condition", # ["multi-image-condition", "auto-regressive", "no"]
     mixed_precision: Optional[str] = "fp16" ,
+    height: int = 512,
+    width: int = 512,
 ):
     time_string = get_time_string()
     logdir = os.path.join(logdir, f"_{time_string}")
@@ -83,7 +85,7 @@ def test(
     
     ref_images= []
     for id in ref_image:
-        r_image = Image.open(id).convert('RGB').resize((256, 256))
+        r_image = Image.open(id).convert('RGB').resize((height, width))
         r_image = transforms.ToTensor()(r_image)
         ref_images.append(np.ascontiguousarray(r_image))
     ref_images = torch.from_numpy(np.ascontiguousarray(ref_images)).float()
@@ -109,8 +111,8 @@ def test(
             prompt = prompt,
             image_prompt = ref_images,
             prev_prompt = ref_prompt,
-            height = 256,
-            width = 256,
+            height = height,
+            width = width,
             generator = generator,
             num_inference_steps = num_inference_steps,
             guidance_scale = guidance_scale,
@@ -166,6 +168,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_sample_per_prompt", type=int, help="Number of samples per prompt.")
     parser.add_argument("--stage", type=str, choices=["multi-image-condition", "auto-regressive", "no"], help="Generation stage mode.")
     parser.add_argument("--mixed_precision", type=str, choices=["fp16", "bf16", "no"], help="Mixed precision mode.")
+    parser.add_argument("--height", type=int, help="Height of output image (must be divisible by 8).")
+    parser.add_argument("--width", type=int, help="Width of output image (must be divisible by 8).")
 
     args = parser.parse_args()
     params = {k: v for k, v in vars(args).items() if v is not None}
