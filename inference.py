@@ -82,8 +82,8 @@ def test(
     vae.eval()
     text_encoder.eval()
     unet.eval()
-    
-    ref_images= []
+
+    ref_images = []
     for id in ref_image:
         r_image = Image.open(id).convert('RGB').resize((height, width))
         r_image = transforms.ToTensor()(r_image)
@@ -173,11 +173,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     params = {k: v for k, v in vars(args).items() if v is not None}
-
-    # Convert single-item lists to strings
-    for key in ["ref_prompt", "ref_image"]:
-        if key in params and isinstance(params[key], list) and len(params[key]) == 1:
-            params[key] = params[key][0]
 
     test(**params)
 
