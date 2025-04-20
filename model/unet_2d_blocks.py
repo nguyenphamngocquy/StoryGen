@@ -218,6 +218,22 @@ class UNetMidBlock2DCrossAttn(nn.Module):
         self.attn_num_head_channels = attn_num_head_channels
         resnet_groups = resnet_groups if resnet_groups is not None else min(in_channels // 4, 32)
 
+        print("\n ----------------------- UNetMidBlock2DCrossAttn ------------------------")
+        print("in_channels: ", in_channels)
+        print("temb_channels: ", temb_channels)
+        print("num_layers: ", num_layers)
+        print("resnet_eps: ", resnet_eps)
+        print("resnet_time_scale_shift: ", resnet_time_scale_shift)
+        print("resnet_act_fn: ", resnet_act_fn)
+        print("resnet_groups: ", resnet_groups)
+        print("resnet_pre_norm: ", resnet_pre_norm)
+        print("attn_num_head_channels: ", attn_num_head_channels)
+        print("cross_attention_dim: ", cross_attention_dim)
+        print("use_linear_projection: ", use_linear_projection)
+        print("upcast_attention: ", upcast_attention)
+        print("output_scale_factor: ", output_scale_factor)
+        print("dropout: ", dropout)
+
         resnets = [
             ResnetBlock2D(
                 in_channels=in_channels,
@@ -269,10 +285,27 @@ class UNetMidBlock2DCrossAttn(nn.Module):
     def forward(
         self, hidden_states, temb=None, image_hidden_states=None, encoder_hidden_states=None, cross_attention_kwargs=None
     ):
+        print("\n ----------------------- UNetMidBlock2DCrossAttn forward ------------------------")
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("temb.shape: ", temb.shape)
+        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
+        if image_hidden_states is not None:
+            print("image_hidden_states:")
+            for key, value in image_hidden_states.items():
+                print(f"{key}: {value.shape}")
+        if cross_attention_kwargs is not None:
+            print("cross_attention_kwargs:")
+            for key, value in cross_attention_kwargs.items():
+                if isinstance(value, torch.Tensor):
+                    print(f"{key}: {value.shape}")
+                else:
+                    print(f"{key}: {value}")
+
         hidden_states = self.resnets[0](hidden_states, temb)
         mid_img_dif_conditions = []
 
         if image_hidden_states is None:
+            print("No image_hidden_states")
             # No image_hidden_states, ref_image cycle, need img_dif_condition
             for attn, resnet in zip(self.attentions, self.resnets[1:]):
                 result = attn(
@@ -281,9 +314,12 @@ class UNetMidBlock2DCrossAttn(nn.Module):
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
                 hidden_states = result.sample
+                print("hidden_states.shape after attn: ", hidden_states.shape)
                 mid_img_dif_conditions.append(result.img_dif_condition)
                 hidden_states = resnet(hidden_states, temb)
+                print("hidden_states.shape after resnet: ", hidden_states.shape)
         else:
+            print("Have image_hidden_states")
             # Have image_hidden_states, image cycle, no need for img_dif_condition
             for attn, resnet in zip(self.attentions, self.resnets[1:]):
                 hidden_states = attn(
@@ -292,8 +328,12 @@ class UNetMidBlock2DCrossAttn(nn.Module):
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                 ).sample
+                print("hidden_states.shape after attn: ", hidden_states.shape)
                 hidden_states = resnet(hidden_states, temb)
+                print("hidden_states.shape after resnet: ", hidden_states.shape)
 
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("mid_img_dif_conditions.shape: ", [x.shape for x in mid_img_dif_conditions])
         return hidden_states, mid_img_dif_conditions
 
 
@@ -325,6 +365,26 @@ class CrossAttnDownBlock2D(nn.Module):
 
         self.has_cross_attention = True
         self.attn_num_head_channels = attn_num_head_channels
+
+        print("\n ----------------------- CrossAttnDownBlock2D ------------------------")
+        print("in_channels: ", in_channels)
+        print("out_channels: ", out_channels)
+        print("temb_channels: ", temb_channels)
+        print("num_layers: ", num_layers)
+        print("resnet_eps: ", resnet_eps)
+        print("resnet_time_scale_shift: ", resnet_time_scale_shift)
+        print("resnet_act_fn: ", resnet_act_fn)
+        print("resnet_groups: ", resnet_groups)
+        print("resnet_pre_norm: ", resnet_pre_norm)
+        print("attn_num_head_channels: ", attn_num_head_channels)
+        print("cross_attention_dim: ", cross_attention_dim)
+        print("use_linear_projection: ", use_linear_projection)
+        print("only_cross_attention: ", only_cross_attention)
+        print("upcast_attention: ", upcast_attention)
+        print("output_scale_factor: ", output_scale_factor)
+        print("downsample_padding: ", downsample_padding)
+        print("add_downsample: ", add_downsample)
+        print("dropout: ", dropout)
 
         for i in range(num_layers):
             in_channels = in_channels if i == 0 else out_channels
@@ -380,22 +440,43 @@ class CrossAttnDownBlock2D(nn.Module):
         ln = 4 - hidden_states.shape[2] // 8
         if ln <1: ln=1 # the number of the block: 1 or 2 or 3
 
+        print("\n ----------------------- CrossAttnDownBlock2D forward ------------------------")
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("temb.shape: ", temb.shape)
+        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
+        print("ln: ", ln)
+        print("gradient_checkpointing: ", self.gradient_checkpointing)
+        if image_hidden_states is not None:
+            print("image_hidden_states:")
+            for key, value in image_hidden_states.items():
+                print(f"{key}: {value.shape}")
+        if cross_attention_kwargs is not None:
+            print("cross_attention_kwargs:")
+            for key, value in cross_attention_kwargs.items():
+                if isinstance(value, torch.Tensor):
+                    print(f"{key}: {value.shape}")
+                else:
+                    print(f"{key}: {value}")
+
         if image_hidden_states is None:
             # No image_hidden_states, ref_image cycle, need img_dif_condition
+            print("No image_hidden_states")
             for resnet, attn in zip(self.resnets, self.attentions):
-
                 hidden_states = resnet(hidden_states, temb)
+                print("hidden_states.shape after resnet: ", hidden_states.shape)
                 result = attn(
                     hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
                 hidden_states = result.sample
+                print("hidden_states.shape after attn: ", hidden_states.shape)
                 down_img_dif_conditions.append(result.img_dif_condition)
 
                 output_states += (hidden_states,)
         else:
             # Have image_hidden_states, image cycle, no need for img_dif_condition
+            print("Have image_hidden_states")
             for i, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
                 if self.training and self.gradient_checkpointing:
 
@@ -418,21 +499,27 @@ class CrossAttnDownBlock2D(nn.Module):
                     )[0]
                 else:
                     hidden_states = resnet(hidden_states, temb)
+                    print("hidden_states.shape after resnet: ", hidden_states.shape)
                     hidden_states = attn(
                         hidden_states,
                         image_hidden_states=image_hidden_states["down_"+str(ln)+'_'+str(i+1)],
                         encoder_hidden_states=encoder_hidden_states,
                         cross_attention_kwargs=cross_attention_kwargs,
                     ).sample
+                    print("hidden_states.shape after attn: ", hidden_states.shape)
 
                 output_states += (hidden_states,)
 
         if self.downsamplers is not None:
             for downsampler in self.downsamplers:
                 hidden_states = downsampler(hidden_states)
+                print("hidden_states.shape after downsampler: ", hidden_states.shape)
 
             output_states += (hidden_states,)
 
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("output_states.shape: ", [x.shape for x in output_states])
+        print("down_img_dif_conditions.shape: ", [x.shape for x in down_img_dif_conditions])
         return hidden_states, output_states, down_img_dif_conditions
 
 
@@ -455,6 +542,21 @@ class DownBlock2D(nn.Module):
     ):
         super().__init__()
         resnets = []
+
+        print("\n ----------------------- DownBlock2D ------------------------")
+        print("in_channels: ", in_channels)
+        print("out_channels: ", out_channels)
+        print("temb_channels: ", temb_channels)
+        print("num_layers: ", num_layers)
+        print("resnet_eps: ", resnet_eps)
+        print("resnet_time_scale_shift: ", resnet_time_scale_shift)
+        print("resnet_act_fn: ", resnet_act_fn)
+        print("resnet_groups: ", resnet_groups)
+        print("resnet_pre_norm: ", resnet_pre_norm)
+        print("output_scale_factor: ", output_scale_factor)
+        print("add_downsample: ", add_downsample)
+        print("downsample_padding: ", downsample_padding)
+        print("dropout: ", dropout)
 
         for i in range(num_layers):
             in_channels = in_channels if i == 0 else out_channels
@@ -491,6 +593,11 @@ class DownBlock2D(nn.Module):
     def forward(self, hidden_states, temb=None):
         output_states = ()
 
+        print("\n ----------------------- DownBlock2D forward ------------------------")
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("temb.shape: ", temb.shape)
+        print("gradient_checkpointing: ", self.gradient_checkpointing)
+
         for resnet in self.resnets:
             if self.training and self.gradient_checkpointing:
 
@@ -503,15 +610,19 @@ class DownBlock2D(nn.Module):
                 hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(resnet), hidden_states, temb)
             else:
                 hidden_states = resnet(hidden_states, temb)
+                print("hidden_states.shape after resnet: ", hidden_states.shape)
 
             output_states += (hidden_states,)
 
         if self.downsamplers is not None:
             for downsampler in self.downsamplers:
                 hidden_states = downsampler(hidden_states)
+                print("hidden_states.shape after downsampler: ", hidden_states.shape)
 
             output_states += (hidden_states,)
-
+        
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("output_states.shape: ", [x.shape for x in output_states])
         return hidden_states, output_states
 
 
@@ -543,6 +654,26 @@ class CrossAttnUpBlock2D(nn.Module):
 
         self.has_cross_attention = True
         self.attn_num_head_channels = attn_num_head_channels
+
+        print("\n ----------------------- CrossAttnUpBlock2D ------------------------")
+        print("in_channels: ", in_channels)
+        print("out_channels: ", out_channels)
+        print("prev_output_channel: ", prev_output_channel)
+        print("temb_channels: ", temb_channels)
+        print("num_layers: ", num_layers)
+        print("resnet_eps: ", resnet_eps)
+        print("resnet_time_scale_shift: ", resnet_time_scale_shift)
+        print("resnet_act_fn: ", resnet_act_fn)
+        print("resnet_groups: ", resnet_groups)
+        print("resnet_pre_norm: ", resnet_pre_norm)
+        print("attn_num_head_channels: ", attn_num_head_channels)
+        print("cross_attention_dim: ", cross_attention_dim)
+        print("use_linear_projection: ", use_linear_projection)
+        print("only_cross_attention: ", only_cross_attention)
+        print("upcast_attention: ", upcast_attention)
+        print("output_scale_factor: ", output_scale_factor)
+        print("add_upsample: ", add_upsample)
+        print("dropout: ", dropout)
 
         for i in range(num_layers):
             res_skip_channels = in_channels if (i == num_layers - 1) else out_channels
@@ -600,30 +731,55 @@ class CrossAttnUpBlock2D(nn.Module):
         ln = hidden_states.shape[2] // 8
         if ln > 3: ln=3 # the number of the block: 1 or 2 or 3
 
+        print("\n ----------------------- CrossAttnUpBlock2D forward ------------------------")
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("temb.shape: ", temb.shape)
+        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
+        print("ln: ", ln)
+        print("gradient_checkpointing: ", self.gradient_checkpointing)
+        if image_hidden_states is not None:
+            print("image_hidden_states:")
+            for key, value in image_hidden_states.items():
+                print(f"{key}: {value.shape}")
+        if cross_attention_kwargs is not None:
+            print("cross_attention_kwargs:")
+            for key, value in cross_attention_kwargs.items():
+                if isinstance(value, torch.Tensor):
+                    print(f"{key}: {value.shape}")
+                else:
+                    print(f"{key}: {value}")
+
         if image_hidden_states is None:
             # No image_hidden_states, ref_image cycle, need img_dif_condition
+            print("No image_hidden_states")
             for resnet, attn in zip(self.resnets, self.attentions):
                 # pop res hidden states
                 res_hidden_states = res_hidden_states_tuple[-1]
                 res_hidden_states_tuple = res_hidden_states_tuple[:-1]
                 hidden_states = torch.cat([hidden_states, res_hidden_states], dim=1)
+                print("hidden_states.shape after concat: ", hidden_states.shape)
 
                 hidden_states = resnet(hidden_states, temb)
+                print("hidden_states.shape after resnet: ", hidden_states.shape)
+
                 result = attn(
                     hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
                 hidden_states = result.sample
+                print("hidden_states.shape after attn: ", hidden_states.shape)
                 up_img_dif_conditions.append(result.img_dif_condition)
 
         else:
             # Have image_hidden_states, image cycle, no need for img_dif_condition
+            print("Have image_hidden_states")
             for i, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
                 # pop res hidden states
                 res_hidden_states = res_hidden_states_tuple[-1]
                 res_hidden_states_tuple = res_hidden_states_tuple[:-1]
                 hidden_states = torch.cat([hidden_states, res_hidden_states], dim=1)
+                print("hidden_states.shape after concat: ", hidden_states.shape)
 
                 if self.training and self.gradient_checkpointing:
 
@@ -646,17 +802,23 @@ class CrossAttnUpBlock2D(nn.Module):
                     )[0]
                 else:
                     hidden_states = resnet(hidden_states, temb)
+                    print("hidden_states.shape after resnet: ", hidden_states.shape)
                     hidden_states = attn(
                         hidden_states,
                         image_hidden_states=image_hidden_states["up_"+str(ln)+'_'+str(i+1)],
                         encoder_hidden_states=encoder_hidden_states,
                         cross_attention_kwargs=cross_attention_kwargs,
                     ).sample
+                    print("hidden_states.shape after attn: ", hidden_states.shape)
+                
 
         if self.upsamplers is not None:
             for upsampler in self.upsamplers:
                 hidden_states = upsampler(hidden_states, upsample_size)
+                print("hidden_states.shape after upsampler: ", hidden_states.shape)
 
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("up_img_dif_conditions.shape: ", [x.shape for x in up_img_dif_conditions])
         return hidden_states, up_img_dif_conditions
 
 
@@ -679,6 +841,21 @@ class UpBlock2D(nn.Module):
     ):
         super().__init__()
         resnets = []
+
+        print("\n ----------------------- UpBlock2D ------------------------")
+        print("in_channels: ", in_channels)
+        print("prev_output_channel: ", prev_output_channel)
+        print("out_channels: ", out_channels)
+        print("temb_channels: ", temb_channels)
+        print("num_layers: ", num_layers)
+        print("resnet_eps: ", resnet_eps)
+        print("resnet_time_scale_shift: ", resnet_time_scale_shift)
+        print("resnet_act_fn: ", resnet_act_fn)
+        print("resnet_groups: ", resnet_groups)
+        print("resnet_pre_norm: ", resnet_pre_norm)
+        print("output_scale_factor: ", output_scale_factor)
+        print("add_upsample: ", add_upsample)
+        print("dropout: ", dropout)
 
         for i in range(num_layers):
             res_skip_channels = in_channels if (i == num_layers - 1) else out_channels
@@ -709,11 +886,20 @@ class UpBlock2D(nn.Module):
         self.gradient_checkpointing = False
 
     def forward(self, hidden_states, res_hidden_states_tuple, temb=None, upsample_size=None):
+        print("\n ----------------------- UpBlock2D forward ------------------------")
+        print("hidden_states.shape: ", hidden_states.shape)
+        print("temb.shape: ", temb.shape)
+        print("res_hidden_states_tuple: ", len(res_hidden_states_tuple))
+        print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
+        print("upsample_size: ", upsample_size)
+        print("gradient_checkpointing: ", self.gradient_checkpointing)
+
         for resnet in self.resnets:
             # pop res hidden states
             res_hidden_states = res_hidden_states_tuple[-1]
             res_hidden_states_tuple = res_hidden_states_tuple[:-1]
             hidden_states = torch.cat([hidden_states, res_hidden_states], dim=1)
+            print("hidden_states.shape after concat: ", hidden_states.shape)
 
             if self.training and self.gradient_checkpointing:
 
@@ -726,9 +912,12 @@ class UpBlock2D(nn.Module):
                 hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(resnet), hidden_states, temb)
             else:
                 hidden_states = resnet(hidden_states, temb)
+                print("hidden_states.shape after resnet: ", hidden_states.shape)
 
         if self.upsamplers is not None:
             for upsampler in self.upsamplers:
                 hidden_states = upsampler(hidden_states, upsample_size)
+                print("hidden_states.shape after upsampler: ", hidden_states.shape)
 
+        print("hidden_states.shape: ", hidden_states.shape)
         return hidden_states

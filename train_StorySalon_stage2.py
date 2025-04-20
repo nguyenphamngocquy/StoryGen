@@ -360,7 +360,7 @@ def train(
         
         if accelerator.is_main_process and step == 0:
             print("\nt_prev_prompt_ids: ", t_prev_prompt_ids.shape)
-            print("ref_image after vae encoder: ", ref_image_list[0].shape)
+            print("ref_image after vae encoder: ", [x.shape for x in ref_image_list])
             print("ref_timesteps: ", ref_timesteps.shape)
             print("noisy_latent: ", noisy_latent.shape)
             print("encoder_hidden_states: ", encoder_hidden_states.shape)

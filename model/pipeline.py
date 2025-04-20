@@ -408,8 +408,8 @@ class StableDiffusionPipeline(DiffusionPipeline):
         if step == 0:
             print("Latents shape after prepare_latents: ", latents.shape)
             print("Image prompt shape: ", image_prompt.shape)
-            print("Zero image prompt shape after vae encoder: ", zero_image_prompts[0].shape)
-            print("Image prompt shape after vae encoder: ", image_prompts[0].shape)
+            print("Zero image prompt shape after vae encoder: ", [x.shape for x in zero_image_prompts])
+            print("Image prompt shape after vae encoder: ", [x.shape for x in image_prompts])
         
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
