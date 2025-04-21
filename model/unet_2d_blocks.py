@@ -733,8 +733,10 @@ class CrossAttnUpBlock2D(nn.Module):
 
         print("\n----------------------- CrossAttnUpBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
+        print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
         print("temb.shape: ", temb.shape)
         print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
+        print("upsample_size: ", upsample_size)
         print("ln: ", ln)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
         if image_hidden_states is not None:
