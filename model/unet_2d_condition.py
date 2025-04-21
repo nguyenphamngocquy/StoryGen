@@ -452,6 +452,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
             blocks.append(unet_blocks("Down Block", i, input_shape, str(sample.shape)))
             down_block_res_samples += res_samples
+        
+        if step == 0:
+            print("down_block_res_samples: ", [x.shape for x in down_block_res_samples])
 
         # 4. mid
         if self.mid_block is not None:
