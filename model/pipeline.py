@@ -410,6 +410,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
             print("Image prompt shape: ", image_prompt.shape)
             print("Zero image prompt shape after vae encoder: ", [x.shape for x in zero_image_prompts])
             print("Image prompt shape after vae encoder: ", [x.shape for x in image_prompts])
+            print("stage: ", stage)
         
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
@@ -458,7 +459,7 @@ class StableDiffusionPipeline(DiffusionPipeline):
                     if step == 0 and i == 0:
                         print("Image condition shape after concatenation:")
                         for k, v in img_dif_conditions.items():
-                            print(f"Key: {k}, Shape: {v.shape}")
+                            print(f"{k}: {v.shape}")
                 else:
                     img_dif_conditions = None
                 

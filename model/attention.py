@@ -52,6 +52,23 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         # Define input layers
         self.in_channels = in_channels
 
+        print("\n----------------------- Transformer2DModel -----------------------")
+        print("num_attention_heads: ", num_attention_heads)
+        print("attention_head_dim: ", attention_head_dim)
+        print("in_channels: ", in_channels if in_channels is not None else "None")
+        print("out_channels: ", out_channels if out_channels is not None else "None")
+        print("num_layers: ", num_layers)
+        print("dropout: ", dropout)
+        print("norm_num_groups: ", norm_num_groups)
+        print("cross_attention_dim: ", cross_attention_dim if cross_attention_dim is not None else "None")
+        print("attention_bias: ", attention_bias)
+        print("activation_fn: ", activation_fn)
+        print("num_embeds_ada_norm: ", num_embeds_ada_norm if num_embeds_ada_norm is not None else "None")
+        print("use_linear_projection: ", use_linear_projection)
+        print("only_cross_attention: ", only_cross_attention)
+        print("upcast_attention: ", upcast_attention)
+        print("inner_dim: ", inner_dim)
+
         self.norm = torch.nn.GroupNorm(num_groups=norm_num_groups, num_channels=in_channels, eps=1e-6, affine=True)
         if use_linear_projection:
             self.proj_in = nn.Linear(in_channels, inner_dim)
@@ -91,6 +108,19 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         cross_attention_kwargs=None,
         return_dict: bool = True,
     ):
+        print("\n----------------------- Transformer2DModel forward -----------------------")
+        print("hidden_states: ", hidden_states.shape)
+        print("image_hidden_states: ", image_hidden_states.shape if image_hidden_states is not None else "None")
+        print("encoder_hidden_states: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
+        print("timestep: ", timestep.shape if timestep is not None else "None")
+        if cross_attention_kwargs is not None:
+            print("cross_attention_kwargs:")
+            for key, value in cross_attention_kwargs.items():
+                if isinstance(value, torch.Tensor):
+                    print(f"{key}: {value.shape}")
+                else:
+                    print(f"{key}: {value}")
+        print("return_dict", return_dict)
         
         # 1. Input
         batch, _, height, width = hidden_states.shape
@@ -101,6 +131,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
             hidden_states = self.proj_in(hidden_states)
             inner_dim = hidden_states.shape[1]
             hidden_states = hidden_states.permute(0, 2, 3, 1).reshape(batch, height * width, inner_dim)
+        print("hidden_states after proj_in", hidden_states.shape)
     
         # 2. Blocks
         for block in self.transformer_blocks:
@@ -119,6 +150,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         else:
             hidden_states = self.proj_out(hidden_states)
             hidden_states = hidden_states.reshape(batch, height, width, inner_dim).permute(0, 3, 1, 2).contiguous()
+        print("hidden_states after proj_out", hidden_states.shape)
 
         output = hidden_states + residual
 

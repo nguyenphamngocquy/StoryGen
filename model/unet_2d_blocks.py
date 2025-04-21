@@ -218,7 +218,7 @@ class UNetMidBlock2DCrossAttn(nn.Module):
         self.attn_num_head_channels = attn_num_head_channels
         resnet_groups = resnet_groups if resnet_groups is not None else min(in_channels // 4, 32)
 
-        print("\n ----------------------- UNetMidBlock2DCrossAttn ------------------------")
+        print("\n----------------------- UNetMidBlock2DCrossAttn -----------------------")
         print("in_channels: ", in_channels)
         print("temb_channels: ", temb_channels)
         print("num_layers: ", num_layers)
@@ -285,7 +285,7 @@ class UNetMidBlock2DCrossAttn(nn.Module):
     def forward(
         self, hidden_states, temb=None, image_hidden_states=None, encoder_hidden_states=None, cross_attention_kwargs=None
     ):
-        print("\n ----------------------- UNetMidBlock2DCrossAttn forward ------------------------")
+        print("\n----------------------- UNetMidBlock2DCrossAttn forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
         print("temb.shape: ", temb.shape)
         print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
@@ -366,7 +366,7 @@ class CrossAttnDownBlock2D(nn.Module):
         self.has_cross_attention = True
         self.attn_num_head_channels = attn_num_head_channels
 
-        print("\n ----------------------- CrossAttnDownBlock2D ------------------------")
+        print("\n----------------------- CrossAttnDownBlock2D -----------------------")
         print("in_channels: ", in_channels)
         print("out_channels: ", out_channels)
         print("temb_channels: ", temb_channels)
@@ -440,7 +440,7 @@ class CrossAttnDownBlock2D(nn.Module):
         ln = 4 - hidden_states.shape[2] // 8
         if ln <1: ln=1 # the number of the block: 1 or 2 or 3
 
-        print("\n ----------------------- CrossAttnDownBlock2D forward ------------------------")
+        print("\n----------------------- CrossAttnDownBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
         print("temb.shape: ", temb.shape)
         print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
@@ -543,7 +543,7 @@ class DownBlock2D(nn.Module):
         super().__init__()
         resnets = []
 
-        print("\n ----------------------- DownBlock2D ------------------------")
+        print("\n----------------------- DownBlock2D -----------------------")
         print("in_channels: ", in_channels)
         print("out_channels: ", out_channels)
         print("temb_channels: ", temb_channels)
@@ -593,7 +593,7 @@ class DownBlock2D(nn.Module):
     def forward(self, hidden_states, temb=None):
         output_states = ()
 
-        print("\n ----------------------- DownBlock2D forward ------------------------")
+        print("\n----------------------- DownBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
         print("temb.shape: ", temb.shape)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
@@ -655,7 +655,7 @@ class CrossAttnUpBlock2D(nn.Module):
         self.has_cross_attention = True
         self.attn_num_head_channels = attn_num_head_channels
 
-        print("\n ----------------------- CrossAttnUpBlock2D ------------------------")
+        print("\n----------------------- CrossAttnUpBlock2D -----------------------")
         print("in_channels: ", in_channels)
         print("out_channels: ", out_channels)
         print("prev_output_channel: ", prev_output_channel)
@@ -731,7 +731,7 @@ class CrossAttnUpBlock2D(nn.Module):
         ln = hidden_states.shape[2] // 8
         if ln > 3: ln=3 # the number of the block: 1 or 2 or 3
 
-        print("\n ----------------------- CrossAttnUpBlock2D forward ------------------------")
+        print("\n----------------------- CrossAttnUpBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
         print("temb.shape: ", temb.shape)
         print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
@@ -842,7 +842,7 @@ class UpBlock2D(nn.Module):
         super().__init__()
         resnets = []
 
-        print("\n ----------------------- UpBlock2D ------------------------")
+        print("\n----------------------- UpBlock2D -----------------------")
         print("in_channels: ", in_channels)
         print("prev_output_channel: ", prev_output_channel)
         print("out_channels: ", out_channels)
@@ -886,7 +886,7 @@ class UpBlock2D(nn.Module):
         self.gradient_checkpointing = False
 
     def forward(self, hidden_states, res_hidden_states_tuple, temb=None, upsample_size=None):
-        print("\n ----------------------- UpBlock2D forward ------------------------")
+        print("\n----------------------- UpBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
         print("temb.shape: ", temb.shape)
         print("res_hidden_states_tuple: ", len(res_hidden_states_tuple))

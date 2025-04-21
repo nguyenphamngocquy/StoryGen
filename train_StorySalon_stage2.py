@@ -213,10 +213,10 @@ def train(
         #     params.requires_grad = True
     
     # Print trainable parameters after modifying requires_grad
-    if accelerator.is_main_process:
-        print_trainable_parameters(text_encoder, "Text Encoder")
-        print_trainable_parameters(vae, "VAE")
-        print_trainable_parameters(unet, "UNet")
+    # if accelerator.is_main_process:
+    #     print_trainable_parameters(text_encoder, "Text Encoder")
+    #     print_trainable_parameters(vae, "VAE")
+    #     print_trainable_parameters(unet, "UNet")
 
     if scale_lr:
         learning_rate = (
@@ -367,7 +367,7 @@ def train(
             # Display the image diffusion conditions
             print("\nImage diffusion conditions after concatenation:")
             for key, value in img_dif_conditions.items():
-                print(f"Key: {key}, Shape: {value.shape}")
+                print(f"{key}: {value.shape}")
         
         # Predict the noise residual
         model_pred = unet(noisy_latent, timesteps, encoder_hidden_states=encoder_hidden_states, image_hidden_states=img_dif_conditions, return_dict=False, step=step)[0]
