@@ -287,8 +287,8 @@ class UNetMidBlock2DCrossAttn(nn.Module):
     ):
         print("\n----------------------- UNetMidBlock2DCrossAttn forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape)
-        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
+        print("temb.shape: ", temb.shape if temb is not None else "None")
+        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
         if image_hidden_states is not None:
             print("image_hidden_states:")
             for key, value in image_hidden_states.items():
@@ -442,8 +442,8 @@ class CrossAttnDownBlock2D(nn.Module):
 
         print("\n----------------------- CrossAttnDownBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape)
-        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
+        print("temb.shape: ", temb.shape if temb is not None else "None")
+        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
         print("ln: ", ln)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
         if image_hidden_states is not None:
@@ -595,7 +595,7 @@ class DownBlock2D(nn.Module):
 
         print("\n----------------------- DownBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape)
+        print("temb.shape: ", temb.shape if temb is not None else "None")
         print("gradient_checkpointing: ", self.gradient_checkpointing)
 
         for resnet in self.resnets:
@@ -734,9 +734,9 @@ class CrossAttnUpBlock2D(nn.Module):
         print("\n----------------------- CrossAttnUpBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
         print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
-        print("temb.shape: ", temb.shape)
-        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape)
-        print("upsample_size: ", upsample_size)
+        print("temb.shape: ", temb.shape if temb is not None else "None")
+        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
+        print("upsample_size: ", upsample_size if upsample_size is not None else "None")
         print("ln: ", ln)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
         if image_hidden_states is not None:
@@ -890,10 +890,9 @@ class UpBlock2D(nn.Module):
     def forward(self, hidden_states, res_hidden_states_tuple, temb=None, upsample_size=None):
         print("\n----------------------- UpBlock2D forward -----------------------")
         print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape)
-        print("res_hidden_states_tuple: ", len(res_hidden_states_tuple))
+        print("temb.shape: ", temb.shape if temb is not None else "None")
         print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
-        print("upsample_size: ", upsample_size)
+        print("upsample_size: ", upsample_size if upsample_size is not None else "None")
         print("gradient_checkpointing: ", self.gradient_checkpointing)
 
         for resnet in self.resnets:
