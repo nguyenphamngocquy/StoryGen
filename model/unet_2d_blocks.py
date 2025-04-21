@@ -736,7 +736,7 @@ class CrossAttnUpBlock2D(nn.Module):
         print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
         print("temb.shape: ", temb.shape if temb is not None else "None")
         print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
-        print("upsample_size: ", upsample_size if upsample_size is not None else "None")
+        print("upsample_size: ", upsample_size)
         print("ln: ", ln)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
         if image_hidden_states is not None:
@@ -892,7 +892,7 @@ class UpBlock2D(nn.Module):
         print("hidden_states.shape: ", hidden_states.shape)
         print("temb.shape: ", temb.shape if temb is not None else "None")
         print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
-        print("upsample_size: ", upsample_size if upsample_size is not None else "None")
+        print("upsample_size: ", upsample_size)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
 
         for resnet in self.resnets:
