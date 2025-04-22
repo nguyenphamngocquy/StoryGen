@@ -120,8 +120,8 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
                     print(f"{key}: {value.shape}")
                 else:
                     print(f"{key}: {value}")
-        print("return_dict", return_dict)
-        
+        print("return_dict: ", return_dict)
+
         # 1. Input
         batch, _, height, width = hidden_states.shape
         residual = hidden_states
@@ -131,7 +131,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
             hidden_states = self.proj_in(hidden_states)
             inner_dim = hidden_states.shape[1]
             hidden_states = hidden_states.permute(0, 2, 3, 1).reshape(batch, height * width, inner_dim)
-        print("hidden_states after proj_in", hidden_states.shape)
+        print("hidden_states after proj_in: ", hidden_states.shape)
     
         # 2. Blocks
         for block in self.transformer_blocks:
@@ -150,7 +150,7 @@ class Transformer2DModel(ModelMixin, ConfigMixin):
         else:
             hidden_states = self.proj_out(hidden_states)
             hidden_states = hidden_states.reshape(batch, height, width, inner_dim).permute(0, 3, 1, 2).contiguous()
-        print("hidden_states after proj_out", hidden_states.shape)
+        print("hidden_states after proj_out: ", hidden_states.shape)
 
         output = hidden_states + residual
 

@@ -286,9 +286,9 @@ class UNetMidBlock2DCrossAttn(nn.Module):
         self, hidden_states, temb=None, image_hidden_states=None, encoder_hidden_states=None, cross_attention_kwargs=None
     ):
         print("\n----------------------- UNetMidBlock2DCrossAttn forward -----------------------")
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape if temb is not None else "None")
-        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
+        print("hidden_states: ", hidden_states.shape)
+        print("temb: ", temb.shape if temb is not None else "None")
+        print("encoder_hidden_states: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
         if image_hidden_states is not None:
             print("image_hidden_states:")
             for key, value in image_hidden_states.items():
@@ -332,8 +332,8 @@ class UNetMidBlock2DCrossAttn(nn.Module):
                 hidden_states = resnet(hidden_states, temb)
                 print("hidden_states.shape after resnet: ", hidden_states.shape)
 
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("mid_img_dif_conditions.shape: ", [x.shape for x in mid_img_dif_conditions])
+        print("hidden_states: ", hidden_states.shape)
+        print("mid_img_dif_conditions: ", [x.shape for x in mid_img_dif_conditions])
         return hidden_states, mid_img_dif_conditions
 
 
@@ -441,9 +441,9 @@ class CrossAttnDownBlock2D(nn.Module):
         if ln <1: ln=1 # the number of the block: 1 or 2 or 3
 
         print("\n----------------------- CrossAttnDownBlock2D forward -----------------------")
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape if temb is not None else "None")
-        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
+        print("hidden_states: ", hidden_states.shape)
+        print("temb: ", temb.shape if temb is not None else "None")
+        print("encoder_hidden_states: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
         print("ln: ", ln)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
         if image_hidden_states is not None:
@@ -517,9 +517,9 @@ class CrossAttnDownBlock2D(nn.Module):
 
             output_states += (hidden_states,)
 
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("output_states.shape: ", [x.shape for x in output_states])
-        print("down_img_dif_conditions.shape: ", [x.shape for x in down_img_dif_conditions])
+        print("hidden_states: ", hidden_states.shape)
+        print("output_states: ", [x.shape for x in output_states])
+        print("down_img_dif_conditions: ", [x.shape for x in down_img_dif_conditions])
         return hidden_states, output_states, down_img_dif_conditions
 
 
@@ -594,8 +594,8 @@ class DownBlock2D(nn.Module):
         output_states = ()
 
         print("\n----------------------- DownBlock2D forward -----------------------")
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape if temb is not None else "None")
+        print("hidden_states: ", hidden_states.shape)
+        print("temb: ", temb.shape if temb is not None else "None")
         print("gradient_checkpointing: ", self.gradient_checkpointing)
 
         for resnet in self.resnets:
@@ -621,8 +621,8 @@ class DownBlock2D(nn.Module):
 
             output_states += (hidden_states,)
         
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("output_states.shape: ", [x.shape for x in output_states])
+        print("hidden_states: ", hidden_states.shape)
+        print("output_states: ", [x.shape for x in output_states])
         return hidden_states, output_states
 
 
@@ -732,10 +732,10 @@ class CrossAttnUpBlock2D(nn.Module):
         if ln > 3: ln=3 # the number of the block: 1 or 2 or 3
 
         print("\n----------------------- CrossAttnUpBlock2D forward -----------------------")
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
-        print("temb.shape: ", temb.shape if temb is not None else "None")
-        print("encoder_hidden_states.shape: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
+        print("hidden_states: ", hidden_states.shape)
+        print("res_hidden_states_tuple: ", [x.shape for x in res_hidden_states_tuple])
+        print("temb: ", temb.shape if temb is not None else "None")
+        print("encoder_hidden_states: ", encoder_hidden_states.shape if encoder_hidden_states is not None else "None")
         print("upsample_size: ", upsample_size)
         print("ln: ", ln)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
@@ -819,8 +819,8 @@ class CrossAttnUpBlock2D(nn.Module):
                 hidden_states = upsampler(hidden_states, upsample_size)
                 print("hidden_states.shape after upsampler: ", hidden_states.shape)
 
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("up_img_dif_conditions.shape: ", [x.shape for x in up_img_dif_conditions])
+        print("hidden_states: ", hidden_states.shape)
+        print("up_img_dif_conditions: ", [x.shape for x in up_img_dif_conditions])
         return hidden_states, up_img_dif_conditions
 
 
@@ -889,9 +889,9 @@ class UpBlock2D(nn.Module):
 
     def forward(self, hidden_states, res_hidden_states_tuple, temb=None, upsample_size=None):
         print("\n----------------------- UpBlock2D forward -----------------------")
-        print("hidden_states.shape: ", hidden_states.shape)
-        print("temb.shape: ", temb.shape if temb is not None else "None")
-        print("res_hidden_states_tuple.shape: ", [x.shape for x in res_hidden_states_tuple])
+        print("hidden_states: ", hidden_states.shape)
+        print("temb: ", temb.shape if temb is not None else "None")
+        print("res_hidden_states_tuple: ", [x.shape for x in res_hidden_states_tuple])
         print("upsample_size: ", upsample_size)
         print("gradient_checkpointing: ", self.gradient_checkpointing)
 
@@ -920,5 +920,5 @@ class UpBlock2D(nn.Module):
                 hidden_states = upsampler(hidden_states, upsample_size)
                 print("hidden_states.shape after upsampler: ", hidden_states.shape)
 
-        print("hidden_states.shape: ", hidden_states.shape)
+        print("hidden_states: ", hidden_states.shape)
         return hidden_states

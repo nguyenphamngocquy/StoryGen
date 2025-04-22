@@ -80,7 +80,6 @@ class SampleLogger:
                 guidance_scale=self.guidance_scale,
                 image_guidance_scale = self.image_guidance_scale,
                 num_images_per_prompt=self.num_sample_per_prompt,
-                step=step,
             ).images
 
             image = (image + 1.) / 2. # for visualization
